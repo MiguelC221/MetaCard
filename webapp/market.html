@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>MetaCard — WebMarket</title>
+  <meta name="description" content="Catálogo de productos y servicios del WebMarket MetaCard. Compra fácil con tu tarjeta y código privado."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+  <style>
+    /* ── Market-specific styles ─────────────────────────────────────────── */
+    .market-hero {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+      border-radius: var(--radius-lg);
+      padding: 48px 32px;
+      margin-bottom: 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .market-hero::before {
+      content:'';
+      position:absolute;inset:0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .market-hero h1 { font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 8px; position:relative; }
+    .market-hero p  { color: rgba(255,255,255,0.8); font-size: 16px; margin-bottom: 24px; position:relative; }
+    .market-search {
+      display: flex; gap: 12px; max-width: 560px; margin: 0 auto; position:relative;
+    }
+    .market-search input {
+      flex: 1; padding: 14px 20px; border-radius: 50px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      color: #fff; font-size: 15px; backdrop-filter: blur(8px);
+    }
+    .market-search input::placeholder { color: rgba(255,255,255,0.6); }
+    .market-search input:focus { outline: none; background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.6); }
+    .market-search button {
+      padding: 14px 24px; border-radius: 50px; background: #fff; color: #6366f1;
+      font-weight: 700; border: none; cursor: pointer; transition: all .2s;
+    }
+    .market-search button:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+
+    .filter-bar {
+      display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-btn {
+      padding: 8px 18px; border-radius: 50px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-secondary); font-size: 13px;
+      cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--primary); color: #fff; border-color: var(--primary);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+      cursor: pointer;
+    }
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0,0,0,.35);
+      border-color: var(--primary);
+    }
+    .product-img {
+      width: 100%; height: 200px; object-fit: cover;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 64px;
+    }
+    .product-img img { width:100%; height:100%; object-fit:cover; }
+    .product-body { padding: 16px; }
+    .product-type-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .type-product { background: rgba(99,102,241,.15); color: #a5b4fc; }
+    .type-service { background: rgba(6,182,212,.15); color: #67e8f9; }
+    .product-name  { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .product-desc  { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .product-footer { display: flex; justify-content: space-between; align-items: center; }
+    .product-price { font-size: 20px; font-weight: 800; color: var(--success); }
+    .product-stock { font-size: 11px; color: var(--text-muted); }
+    .btn-buy {
+      padding: 9px 18px; background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; border: none; border-radius: var(--radius-md); font-weight: 600;
+      cursor: pointer; transition: all .2s; font-size: 13px; font-family: inherit;
+    }
+    .btn-buy:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(99,102,241,.5); }
+    .btn-buy:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Detalles modal ───────────────────────────────────────────────── */
+    .product-detail-img {
+      width:100%; height:220px; object-fit:cover; border-radius:var(--radius-md);
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      display:flex; align-items:center; justify-content:center;
+      font-size:80px; margin-bottom:16px; overflow:hidden;
+    }
+    .product-detail-img img { width:100%; height:100%; object-fit:cover; }
+    .pin-input-wrap { position:relative; }
+    .pin-input-wrap input { letter-spacing:6px; font-size:22px; text-align:center; font-family:monospace; font-weight:700; }
+    .pin-toggle {
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      background:none; border:none; cursor:pointer; color:var(--text-secondary); font-size:18px;
+    }
+
+    /* ── Historial ───────────────────────────────────────────────────── */
+    .purchase-item {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 0; border-bottom:1px solid var(--border);
+    }
+    .purchase-item:last-child { border-bottom:none; }
+    .purchase-thumb {
+      width:48px; height:48px; border-radius:var(--radius-sm);
+      background:linear-gradient(135deg,#1e1b4b,#312e81);
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; flex-shrink:0; overflow:hidden;
+    }
+    .purchase-thumb img { width:100%; height:100%; object-fit:cover; }
+
+    .empty-state {
+      text-align:center; padding:64px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size:64px; margin-bottom:16px; opacity:.5; }
+    .empty-state p { font-size:15px; }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- ── Modal detalle / compra ────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="buyModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title" id="buyModalTitle">Comprar producto</span>
+      <button class="modal-close" onclick="closeModal('buyModal')">✕</button>
+    </div>
+
+    <!-- Imagen -->
+    <div class="product-detail-img" id="buyModalImg">🛍️</div>
+
+    <!-- Info -->
+    <div style="margin-bottom:16px">
+      <div id="buyModalType" class="product-type-badge type-product mb-2">📦 Producto</div>
+      <div id="buyModalDesc" class="text-secondary text-sm" style="line-height:1.6;margin-bottom:8px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div id="buyModalPrice" class="product-price" style="font-size:24px"></div>
+        <div id="buyModalStock" class="product-stock"></div>
+      </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <!-- Formulario de compra -->
+    <div id="buyForm">
+      <p class="text-sm text-secondary mb-4">Para confirmar la compra ingresa el <strong>ID de tu tarjeta</strong> y tu <strong>Código Privado (PIN)</strong>.</p>
+      <div class="form-group mb-3">
+        <label for="buyCardId">ID de tarjeta (Card ID)</label>
+        <input type="text" id="buyCardId" placeholder="Ej: A1B2C3D4" style="font-family:monospace;text-transform:uppercase"/>
+      </div>
+      <div class="form-group mb-3">
+        <label for="buyPin">Código Privado (PIN)</label>
+        <div class="pin-input-wrap">
+          <input type="password" id="buyPin" maxlength="6" placeholder="••••••" inputmode="numeric"/>
+          <button class="pin-toggle" onclick="togglePin()" id="pinToggleBtn">👁️</button>
+        </div>
+      </div>
+      <div class="form-group mb-4" id="qtyGroup">
+        <label for="buyQty">Cantidad</label>
+        <input type="number" id="buyQty" value="1" min="1" style="width:100px"/>
+      </div>
+      <div id="buyResult" class="hidden" style="padding:12px;border-radius:var(--radius-md);margin-bottom:12px;text-align:center;font-size:13px"></div>
+      <button class="btn btn-primary btn-full" id="buyConfirmBtn" onclick="confirmPurchase()">
+        <span class="btn-text">🛒 Confirmar compra</span>
+        <span class="btn-spinner hidden"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="app-layout">
+  <header class="topbar">
+    <div class="topbar-logo">
+      <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#mg)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="mg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
+      <span>MetaCard Market</span>
+    </div>
+    <div class="topbar-right">
+      <span id="topbarName" class="text-secondary text-sm"></span>
+      <a href="buyer.html" class="btn btn-ghost btn-sm">← Mi cuenta</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-section-label">Market</div>
+    <button class="sidebar-item active" id="nav-catalog"   onclick="showSection('catalog')"><span class="icon">🛍️</span> Catálogo</button>
+    <button class="sidebar-item"        id="nav-purchases" onclick="showSection('purchases')"><span class="icon">📋</span> Mis compras</button>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ── CATÁLOGO ── -->
+    <section id="section-catalog">
+      <!-- Hero -->
+      <div class="market-hero">
+        <h1>🛒 WebMarket MetaCard</h1>
+        <p>Descubre productos y servicios exclusivos. Paga con tu tarjeta MetaCard.</p>
+        <div class="market-search">
+          <input type="text" id="searchInput" placeholder="Buscar productos o servicios..." oninput="filterProducts()"/>
+          <button onclick="filterProducts()">Buscar</button>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filter-bar">
+        <span class="text-sm text-muted" style="margin-right:4px">Filtrar:</span>
+        <button class="filter-btn active" id="filter-all"     onclick="setFilter('all')">🔍 Todos</button>
+        <button class="filter-btn"        id="filter-product" onclick="setFilter('product')">📦 Productos</button>
+        <button class="filter-btn"        id="filter-service" onclick="setFilter('service')">⚙️ Servicios</button>
+        <span class="text-xs text-muted" style="margin-left:auto" id="productCount"></span>
+      </div>
+
+      <!-- Grid -->
+      <div class="products-grid" id="productsGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted)">
+          <div style="font-size:48px;margin-bottom:12px">⏳</div>
+          <div>Cargando catálogo...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MIS COMPRAS ── -->
+    <section id="section-purchases" class="hidden">
+      <div class="page-header"><h1>Mis compras</h1><p>Historial de tus compras en el WebMarket.</p></div>
+      <div class="card">
+        <div id="purchasesBody">
+          <div class="empty-state"><div class="empty-icon">🛍️</div><p>Cargando...</p></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module">
+import { auth, db, BACKEND_URL }                      from './assets/js/firebase-config.js';
+import { onAuthStateChanged, signOut }                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { collection, query, where, orderBy,
+         limit, getDocs }                              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+let currentUser = null;
+let allProducts = [];
+let activeFilter = 'all';
+let selectedProductId = null;
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  document.getElementById('topbarName').textContent = user.displayName || user.email;
+  loadCatalog();
+  loadPurchases();
+});
+
+/* ── Cargar catálogo ───────────────────────────────────────────────── */
+async function loadCatalog() {
+  try {
+    const token = await currentUser.getIdToken();
+    const res   = await fetch(`${BACKEND_URL}/products/approved`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    allProducts = data.products || [];
+    renderProducts();
+  } catch (err) {
+    document.getElementById('productsGrid').innerHTML =
+      `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--danger)">Error al cargar: ${err.message}</div>`;
+  }
+}
+
+function renderProducts() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  const filtered = allProducts.filter(p => {
+    const matchFilter = activeFilter === 'all' || p.type === activeFilter;
+    const matchSearch = !q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  document.getElementById('productCount').textContent = `${filtered.length} resultado(s)`;
+
+  if (!filtered.length) {
+    document.getElementById('productsGrid').innerHTML =
+      `<div style="grid-column:1/-1;text-align:center;padding:64px;color:var(--text-muted)">
+        <div style="font-size:56px;margin-bottom:12px">🔍</div>
+        <div style="font-size:15px">No se encontraron productos</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('productsGrid').innerHTML = filtered.map(p => {
+    const stockLabel = p.type === 'service' ? 'Servicio' : (p.stock > 0 ? `${p.stock} en stock` : '⚠️ Sin stock');
+    const outOfStock = p.type === 'product' && p.stock <= 0;
+    const imgEl = p.imageUrl
+      ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy"/>`
+      : (p.type === 'service' ? '⚙️' : '📦');
+    return `<div class="product-card" onclick="openBuyModal('${p.id}')">
+      <div class="product-img">${imgEl}</div>
+      <div class="product-body">
+        <div class="product-type-badge ${p.type === 'service' ? 'type-service' : 'type-product'}">
+          ${p.type === 'service' ? '⚙️ Servicio' : '📦 Producto'}
+        </div>
+        <div class="product-name">${esc(p.name)}</div>
+        <div class="product-desc">${esc(p.description)}</div>
+        <div class="product-footer">
+          <div>
+            <div class="product-price">${fmt(p.price)}</div>
+            <div class="product-stock">${stockLabel} · por ${esc(p.sellerName||'Vendedor')}</div>
+          </div>
+          <button class="btn-buy" ${outOfStock ? 'disabled' : ''} onclick="event.stopPropagation();openBuyModal('${p.id}')">
+            ${outOfStock ? '⚠️ Agotado' : '🛒 Comprar'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.setFilter = (f) => {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`filter-${f}`).classList.add('active');
+  renderProducts();
+};
+
+window.filterProducts = () => renderProducts();
+
+/* ── Modal de compra ─────────────────────────────────────────────── */
+window.openBuyModal = (productId) => {
+  const p = allProducts.find(x => x.id === productId);
+  if (!p) return;
+  selectedProductId = productId;
+
+  const imgEl = document.getElementById('buyModalImg');
+  imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}"/>` : (p.type === 'service' ? '⚙️' : '📦');
+
+  document.getElementById('buyModalTitle').textContent = p.name;
+  document.getElementById('buyModalType').className    = `product-type-badge ${p.type === 'service' ? 'type-service' : 'type-product'} mb-2`;
+  document.getElementById('buyModalType').textContent  = p.type === 'service' ? '⚙️ Servicio' : '📦 Producto';
+  document.getElementById('buyModalDesc').textContent  = p.description;
+  document.getElementById('buyModalPrice').textContent = fmt(p.price);
+  document.getElementById('buyModalStock').textContent = p.type === 'service' ? 'Disponible' : `${p.stock} en stock`;
+
+  const qtyGroup = document.getElementById('qtyGroup');
+  if (p.type === 'service') {
+    qtyGroup.style.display = 'none';
+    document.getElementById('buyQty').value = 1;
+  } else {
+    qtyGroup.style.display = '';
+    document.getElementById('buyQty').max = p.stock;
+  }
+
+  document.getElementById('buyCardId').value = '';
+  document.getElementById('buyPin').value    = '';
+  document.getElementById('buyResult').classList.add('hidden');
+  document.getElementById('buyModal').classList.remove('hidden');
+};
+
+window.togglePin = () => {
+  const inp = document.getElementById('buyPin');
+  const btn = document.getElementById('pinToggleBtn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+};
+
+window.confirmPurchase = async () => {
+  const cardId      = document.getElementById('buyCardId').value.trim().toUpperCase();
+  const privateCode = document.getElementById('buyPin').value.trim();
+  const quantity    = Number(document.getElementById('buyQty').value);
+  const btn         = document.getElementById('buyConfirmBtn');
+  const resultEl    = document.getElementById('buyResult');
+
+  if (!cardId || !privateCode) { showToast('Ingresa el ID de tarjeta y el PIN', 'warning'); return; }
+  if (!quantity || quantity < 1) { showToast('La cantidad debe ser al menos 1', 'warning'); return; }
+
+  setLoading(btn, true);
+  resultEl.classList.add('hidden');
+
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/market/purchase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ cardId, privateCode, productId: selectedProductId, quantity }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      resultEl.style.cssText = 'background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7;padding:12px;border-radius:var(--radius-md);margin-bottom:12px;text-align:center';
+      resultEl.innerHTML = `<div style="font-size:28px;margin-bottom:4px">✅</div><div style="font-weight:700">¡Compra exitosa!</div><div style="font-size:12px;margin-top:4px">Saldo restante: ${fmt(data.newBalance)}</div>`;
+      resultEl.classList.remove('hidden');
+      loadCatalog();
+      loadPurchases();
+      setTimeout(() => closeModal('buyModal'), 2800);
+    } else {
+      resultEl.style.cssText = 'background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:12px;border-radius:var(--radius-md);margin-bottom:12px;text-align:center';
+      resultEl.innerHTML = `<div style="font-size:28px;margin-bottom:4px">❌</div><div>${data.error}</div>`;
+      resultEl.classList.remove('hidden');
+    }
+  } catch (err) {
+    showToast('Error de red: ' + err.message, 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+};
+
+/* ── Historial de compras ─────────────────────────────────────────── */
+async function loadPurchases() {
+  try {
+    const q    = query(collection(db,'transactions'), where('buyerId','==',currentUser.uid), where('type','==','market_purchase'), limit(100));
+    const snap = await getDocs(q).catch(() => null);
+    const el   = document.getElementById('purchasesBody');
+
+    if (!snap || snap.empty) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><p>Aún no has comprado nada en el Market.</p></div>`;
+      return;
+    }
+
+    const rows = snap.docs.map(d => d.data());
+    rows.sort((a,b) => (b.timestamp?.seconds||0) - (a.timestamp?.seconds||0));
+
+    const productIds = [...new Set(rows.map(tx => tx.productId).filter(Boolean))];
+    const productMap = {};
+    for (const pid of productIds) {
+      const ps = allProducts.find(p => p.id === pid);
+      if (ps) productMap[pid] = ps;
+    }
+
+    el.innerHTML = rows.map(tx => {
+      const prod = productMap[tx.productId];
+      const date = tx.timestamp?.toDate ? tx.timestamp.toDate().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+      const imgEl = prod?.imageUrl ? `<img src="${prod.imageUrl}" alt="${tx.productName}"/>` : (tx.productType === 'service' ? '⚙️' : '📦');
+      return `<div class="purchase-item">
+        <div class="purchase-thumb">${imgEl}</div>
+        <div style="flex:1">
+          <div class="font-bold text-sm">${esc(tx.productName||'—')}</div>
+          <div class="text-xs text-muted">Qty: ${tx.quantity||1} · ${date}</div>
+        </div>
+        <div class="text-success font-bold">${fmt(tx.amount)}</div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('[loadPurchases]', err);
+  }
+}
+
+/* ── Helpers ──────────────────────────────────────────────────────── */
+window.showSection = (name) => {
+  document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(`section-${name}`)?.classList.remove('hidden');
+  document.getElementById(`nav-${name}`)?.classList.add('active');
+  if (name === 'purchases') loadPurchases();
+};
+
+window.closeModal  = (id) => document.getElementById(id).classList.add('hidden');
+window.logout      = () => signOut(auth).then(() => window.location.href = 'login.html');
+window.showToast   = (msg, type='info') => {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`; t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+};
+function fmt(n) { return '$' + Number(n).toLocaleString('es-CO'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setLoading(btn, v) {
+  btn.querySelector('.btn-text').classList.toggle('hidden', v);
+  btn.querySelector('.btn-spinner').classList.toggle('hidden', !v);
+  btn.disabled = v;
+}
+</script>
+</body>
+</html>

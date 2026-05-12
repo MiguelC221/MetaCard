@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MetaCard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Inter', sans-serif; background:#0d0d1a; color:#f0f0f0; }
+    a { text-decoration:none; color:inherit; }
+
+    /* NAVBAR */
+    nav {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 40px; border-bottom:1px solid #ffffff12;
+      background:#0d0d1a; position:sticky; top:0; z-index:10;
+    }
+    .logo { font-size:18px; font-weight:700; }
+    .nav-links { display:flex; gap:12px; }
+    .nav-links a {
+      padding:9px 18px; border-radius:8px; font-size:14px; font-weight:600;
+    }
+    .btn-ghost  { border:1px solid #ffffff20; color:#aaa; }
+    .btn-ghost:hover  { border-color:#6366f1; color:#fff; }
+    .btn-solid  { background:#6366f1; color:#fff; }
+    .btn-solid:hover  { background:#4f46e5; }
+
+    /* HERO */
+    .hero {
+      text-align:center; padding:100px 20px 80px;
+    }
+    .hero h1 { font-size:48px; font-weight:700; line-height:1.2; margin-bottom:16px; }
+    .hero h1 span { color:#6366f1; }
+    .hero p  { font-size:17px; color:#888; max-width:480px; margin:0 auto 32px; }
+    .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .hero-btns a { padding:12px 24px; border-radius:10px; font-size:15px; font-weight:600; }
+
+    /* SECCIONES */
+    section { padding:72px 20px; max-width:900px; margin:0 auto; }
+    section h2 { font-size:26px; font-weight:700; margin-bottom:8px; }
+    section .sub { color:#777; margin-bottom:36px; font-size:15px; }
+
+    /* CARDS GRID */
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+    .card {
+      background:#111125; border:1px solid #ffffff10; border-radius:12px; padding:24px;
+    }
+    .card .icon { font-size:28px; margin-bottom:12px; }
+    .card h3 { font-size:15px; font-weight:600; margin-bottom:6px; }
+    .card p  { font-size:13px; color:#777; line-height:1.6; }
+
+    /* PASOS */
+    .steps { display:flex; gap:24px; flex-wrap:wrap; }
+    .step  { flex:1; min-width:180px; }
+    .step .num {
+      width:36px; height:36px; border-radius:50%; background:#6366f1;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:16px; margin-bottom:12px;
+    }
+    .step h3 { font-size:15px; font-weight:600; margin-bottom:4px; }
+    .step p  { font-size:13px; color:#777; }
+
+    /* CONTACTO */
+    .contact-box {
+      background:#111125; border:1px solid #ffffff10; border-radius:12px;
+      padding:32px; display:flex; flex-direction:column; gap:12px; max-width:480px;
+    }
+    .contact-box input, .contact-box textarea {
+      padding:11px 14px; border-radius:8px;
+      background:#0d0d1a; border:1px solid #ffffff15;
+      color:#f0f0f0; font-family:inherit; font-size:14px; outline:none;
+    }
+    .contact-box textarea { resize:vertical; min-height:90px; }
+    .contact-box button {
+      padding:11px; border-radius:8px; background:#6366f1;
+      color:#fff; font-weight:600; font-size:14px; border:none; cursor:pointer;
+      font-family:inherit;
+    }
+    .contact-box button:hover { background:#4f46e5; }
+
+    /* FOOTER */
+    footer {
+      text-align:center; padding:32px 20px;
+      border-top:1px solid #ffffff10; color:#555; font-size:13px;
+    }
+
+    /* DIVISOR */
+    hr { border:none; border-top:1px solid #ffffff0a; margin:0; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo">💳 MetaCard</div>
+  <div class="nav-links">
+    <a href="#que-es">¿Qué es?</a>
+    <a href="#como">Cómo funciona</a>
+    <a href="#market">Market</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <div class="nav-links">
+    <a href="login.html"            class="btn-ghost">Iniciar sesión</a>
+    <a href="login.html#register"   class="btn-solid">Crear cuenta</a>
+  </div>
+</nav>
+
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Paga en tu campus<br/>con <span>MetaCard</span></h1>
+  <p>Tu billetera digital universitaria. Recarga, paga con NFC y compra en el WebMarket.</p>
+  <div class="hero-btns">
+    <a href="login.html#register" style="background:#6366f1;color:#fff;">Crear cuenta gratis</a>
+    <a href="market.html"         style="border:1px solid #ffffff20;color:#aaa;">Ver el Market →</a>
+  </div>
+</div>
+
+<hr/>
+
+
+<!-- QUÉ ES -->
+<section id="que-es">
+  <h2>¿Qué es MetaCard?</h2>
+  <p class="sub">Una plataforma de pagos para estudiantes y comercios dentro del campus.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="icon">💳</div>
+      <h3>Pagos NFC</h3>
+      <p>Acerca tu tarjeta física a cualquier punto de pago. Rápido y sin efectivo.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🛒</div>
+      <h3>WebMarket</h3>
+      <p>Compra productos y servicios de vendedores del campus usando tu saldo y tu PIN.</p>
+    </div>
+    <div class="card">
+      <div class="icon">💰</div>
+      <h3>Cashback</h3>
+      <p>Recibe un porcentaje de vuelta en cada pago. Tu saldo crece solo.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⭐</div>
+      <h3>Membresías</h3>
+      <p>Sube de nivel y desbloquea descuentos en salud, gym, cine y más.</p>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+
+<!-- CÓMO FUNCIONA -->
+<section id="como">
+  <h2>Cómo funciona</h2>
+  <p class="sub">En 4 pasos simples.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h3>Crea tu cuenta</h3>
+      <p>Regístrate con tu email y recibe $10.000 de bienvenida.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h3>Recarga saldo</h3>
+      <p>Transfiere dinero o paga en un punto autorizado.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h3>Vincula tu tarjeta</h3>
+      <p>El admin te asigna tu tarjeta NFC física.</p>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <h3>Paga y gana</h3>
+      <p>Usa tu tarjeta en tiendas o tu PIN en el Market. ¡Acumula cashback!</p>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+
+<!-- MARKET -->
+<section id="market">
+  <h2>WebMarket</h2>
+  <p class="sub">Compra y vende dentro del campus.</p>
+  <div class="card" style="max-width:480px;text-align:center;padding:40px">
+    <div style="font-size:48px;margin-bottom:16px">🛍️</div>
+    <h3 style="font-size:18px;margin-bottom:8px">Explora el catálogo</h3>
+    <p style="margin-bottom:24px">Productos y servicios de vendedores verificados. Paga con tu saldo MetaCard.</p>
+    <a href="market.html" style="display:inline-block;padding:12px 24px;border-radius:8px;background:#6366f1;color:#fff;font-weight:600;font-size:14px;">Ir al Market →</a>
+  </div>
+</section>
+
+<hr/>
+
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <h2>Contacto</h2>
+  <p class="sub">¿Dudas o problemas? Escríbenos.</p>
+  <div class="contact-box">
+    <input  type="text"  placeholder="Tu nombre"/>
+    <input  type="email" placeholder="Tu correo"/>
+    <input  type="text"  placeholder="Asunto"/>
+    <textarea            placeholder="Mensaje..."></textarea>
+    <button onclick="this.textContent='✅ Enviado';setTimeout(()=>this.textContent='Enviar mensaje',3000)">Enviar mensaje</button>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  💳 MetaCard &nbsp;·&nbsp; © 2026 &nbsp;·&nbsp;
+  <a href="login.html" style="color:#6366f1">Iniciar sesión</a> &nbsp;·&nbsp;
+  <a href="market.html" style="color:#6366f1">Market</a>
+</footer>
+
+</body>
+</html>

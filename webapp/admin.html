@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>MetaCard — Panel Administrador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+  <style>
+    .prod-thumb-sm { width:44px;height:44px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#1e1b4b,#312e81);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0; }
+    .prod-thumb-sm img { width:100%;height:100%;object-fit:cover; }
+    .ticket-desc-cell { max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--text-secondary); }
+    .ticket-answered { background:rgba(6,182,212,.08); }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- Modal confirmación -->
+<div class="modal-overlay hidden" id="confirmModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="confirmTitle">Confirmar acción</span><button class="modal-close" onclick="closeModal('confirmModal')">✕</button></div>
+    <p id="confirmMsg" class="text-secondary mb-6"></p>
+    <div id="confirmRejectReason" class="form-group mb-4 hidden">
+      <label>Motivo del rechazo</label>
+      <input type="text" id="rejectReasonInput" placeholder="Escribe el motivo..."/>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-secondary flex-1" onclick="closeModal('confirmModal')">Cancelar</button>
+      <button class="btn btn-primary flex-1" id="confirmActionBtn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal notificación -->
+<div class="modal-overlay hidden" id="notifModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Enviar notificación</span><button class="modal-close" onclick="closeModal('notifModal')">✕</button></div>
+    <div class="form-group mb-3"><label>Usuario ID</label><input type="text" id="notifUserId" placeholder="UID del usuario"/></div>
+    <div class="form-group mb-3"><label>Título</label><input type="text" id="notifTitle" placeholder="Título de la notificación"/></div>
+    <div class="form-group mb-4"><label>Mensaje</label><textarea id="notifBody" rows="3" style="resize:vertical"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="sendNotif()">Enviar FCM</button>
+  </div>
+</div>
+
+<!-- Modal ticket detalle + respuesta -->
+<div class="modal-overlay hidden" id="ticketModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><span class="modal-title">Ticket de soporte</span><button class="modal-close" onclick="closeModal('ticketModal')">✕</button></div>
+    <div class="mb-3"><span class="text-xs text-muted">Asunto</span><div class="font-bold mt-1" id="tktSubject"></div></div>
+    <div class="mb-3"><span class="text-xs text-muted">Usuario</span><div class="text-sm text-secondary mt-1" id="tktUser"></div></div>
+    <div class="mb-3"><span class="text-xs text-muted">Descripción</span><div class="card mt-1" style="padding:12px;background:var(--bg-elevated);font-size:13px;line-height:1.6" id="tktDesc"></div></div>
+    <div id="tktAdminResp" class="mb-3 hidden"><span class="text-xs text-muted">Respuesta anterior</span><div class="card mt-1" style="padding:12px;background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.3);font-size:13px" id="tktRespText"></div></div>
+    <div class="separator"></div>
+    <div class="form-group mb-3"><label for="tktResponse">Respuesta del admin</label><textarea id="tktResponse" rows="3" placeholder="Escribe tu respuesta al usuario..." style="resize:vertical"></textarea></div>
+    <div class="flex gap-2">
+      <button class="btn btn-primary flex-1" id="tktRespondBtn" onclick="sendTicketResponse()">📤 Responder</button>
+      <button class="btn btn-ghost flex-1" id="tktCloseBtn" onclick="closeTicketAction()">✓ Cerrar ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal producto detalle + aprobar/rechazar -->
+<div class="modal-overlay hidden" id="productModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><span class="modal-title" id="prodModalTitle">Detalle del producto</span><button class="modal-close" onclick="closeModal('productModal')">✕</button></div>
+    <div id="prodModalImg" style="width:100%;height:200px;border-radius:var(--radius-md);background:linear-gradient(135deg,#1e1b4b,#312e81);display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:16px;overflow:hidden"></div>
+    <div class="grid-2 mb-3" style="gap:12px">
+      <div><span class="text-xs text-muted">Tipo</span><div class="font-bold mt-1" id="prodModalType"></div></div>
+      <div><span class="text-xs text-muted">Precio</span><div class="font-bold mt-1 text-success" id="prodModalPrice"></div></div>
+      <div><span class="text-xs text-muted">Stock</span><div class="font-bold mt-1" id="prodModalStock"></div></div>
+      <div><span class="text-xs text-muted">Vendedor</span><div class="font-bold mt-1" id="prodModalSeller"></div></div>
+    </div>
+    <div class="mb-4"><span class="text-xs text-muted">Descripción</span><div class="card mt-1" style="padding:12px;background:var(--bg-elevated);font-size:13px;line-height:1.6" id="prodModalDesc"></div></div>
+    <div id="prodRejectReasonWrap" class="form-group mb-3 hidden"><label>Motivo del rechazo</label><input type="text" id="prodRejectReasonInput" placeholder="Escribe el motivo..."/></div>
+    <div class="flex gap-2" id="prodModalActions">
+      <button class="btn btn-success flex-1" onclick="approveProduct()">✅ Aprobar</button>
+      <button class="btn btn-danger flex-1"  onclick="showRejectProduct()">❌ Rechazar</button>
+    </div>
+    <div class="flex gap-2 hidden" id="prodRejectConfirm">
+      <button class="btn btn-secondary flex-1" onclick="cancelReject()">Cancelar</button>
+      <button class="btn btn-danger flex-1"    onclick="confirmRejectProduct()">Confirmar rechazo</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-layout">
+  <header class="topbar">
+    <div class="topbar-logo">
+      <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#ag)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="ag" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+      <span>MetaCard Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-warning">Admin</span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-section-label">Gestión</div>
+    <button class="sidebar-item active" id="nav-overview"   onclick="showSection('overview')">  <span class="icon">📊</span> Overview</button>
+    <button class="sidebar-item"        id="nav-users"      onclick="showSection('users')">      <span class="icon">👥</span> Usuarios</button>
+    <button class="sidebar-item"        id="nav-recharges"  onclick="showSection('recharges')">  <span class="icon">💳</span> Recargas</button>
+    <button class="sidebar-item"        id="nav-cards"      onclick="showSection('cards')">      <span class="icon">📡</span> Tarjetas</button>
+    <button class="sidebar-item"        id="nav-txs"        onclick="showSection('txs')">        <span class="icon">📋</span> Transacciones</button>
+    <div class="sidebar-section-label">Plataforma</div>
+    <button class="sidebar-item"        id="nav-tickets"    onclick="showSection('tickets')">    <span class="icon">🎫</span> Tickets</button>
+    <button class="sidebar-item"        id="nav-products"   onclick="showSection('products')">   <span class="icon">🛍️</span> Productos</button>
+    <button class="sidebar-item"        id="nav-convenios"  onclick="showSection('convenios')">  <span class="icon">🤝</span> Convenios</button>
+    <button class="sidebar-item"        id="nav-notify"     onclick="showSection('notify')">     <span class="icon">🔔</span> Notificaciones</button>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ── OVERVIEW ── -->
+    <section id="section-overview">
+      <div class="page-header"><h1>Panel de administración</h1><p>Resumen general de la plataforma MetaCard.</p></div>
+      <div class="grid-4 mb-6">
+        <div class="stat-card"><div class="stat-label">Usuarios</div><div class="stat-value" id="statUsers">—</div></div>
+        <div class="stat-card"><div class="stat-label">Recargas pendientes</div><div class="stat-value" id="statPending">—</div></div>
+        <div class="stat-card"><div class="stat-label">Transacciones hoy</div><div class="stat-value" id="statTx">—</div></div>
+        <div class="stat-card"><div class="stat-label">Tarjetas activas</div><div class="stat-value" id="statCards">—</div></div>
+      </div>
+      <div class="card">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Recargas pendientes de aprobación</h2>
+        <div id="pendingRechargesOverview" class="text-muted text-sm">Cargando...</div>
+      </div>
+    </section>
+
+    <!-- ── USUARIOS ── -->
+    <section id="section-users" class="hidden">
+      <div class="page-header"><h1>Usuarios</h1></div>
+      <div class="card">
+        <div class="flex gap-2 mb-4">
+          <input type="text" id="userSearch" placeholder="Buscar por nombre o email..." style="flex:1" oninput="filterUsers()"/>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Balance</th><th>Membresía</th><th>Acciones</th></tr></thead>
+            <tbody id="usersBody"><tr><td colspan="6" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RECARGAS ── -->
+    <section id="section-recharges" class="hidden">
+      <div class="page-header"><h1>Solicitudes de recarga</h1><p>Aprueba o rechaza las recargas de los usuarios.</p></div>
+      <div class="card">
+        <div class="flex gap-2 mb-4">
+          <button class="btn btn-secondary btn-sm" onclick="filterRecharges('pending')">Pendientes</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterRecharges('approved')">Aprobadas</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterRecharges('rejected')">Rechazadas</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Usuario</th><th>Monto</th><th>Método</th><th>Nota</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <tbody id="rechargesBody"><tr><td colspan="7" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TARJETAS ── -->
+    <section id="section-cards" class="hidden">
+      <div class="page-header"><h1>Tarjetas NFC</h1><p>Gestiona y vincula las tarjetas físicas.</p></div>
+      <div class="card mb-6">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Vincular nueva tarjeta</h2>
+        <div class="flex gap-4 items-end">
+          <div class="form-group flex-1">
+            <label>UID de la tarjeta NFC</label>
+            <input type="text" id="newCardUid" placeholder="Ej: A1B2C3D4" style="font-family:monospace;text-transform:uppercase"/>
+          </div>
+          <div class="form-group flex-1">
+            <label>ID del usuario (Firestore)</label>
+            <input type="text" id="newCardUserId" placeholder="Ej: vXz9..."/>
+          </div>
+          <button class="btn btn-primary" onclick="linkCard()">Vincular tarjeta</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>UID (hex)</th><th>Usuario ID</th><th>Estado</th><th>Registrada</th><th>Acciones</th></tr></thead>
+            <tbody id="cardsBody"><tr><td colspan="5" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TRANSACCIONES ── -->
+    <section id="section-txs" class="hidden">
+      <div class="page-header"><h1>Todas las transacciones</h1></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Comprador</th><th>Vendedor</th><th>Monto</th><th>Cashback</th><th>Fecha</th></tr></thead>
+            <tbody id="allTxBody"><tr><td colspan="6" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TICKETS ── -->
+    <section id="section-tickets" class="hidden">
+      <div class="page-header"><h1>Tickets de soporte</h1></div>
+      <div class="card">
+        <div class="flex gap-2 mb-4">
+          <button class="btn btn-secondary btn-sm" onclick="filterTickets('open')">Abiertos</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterTickets('inProgress')">En progreso</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterTickets('closed')">Cerrados</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterTickets('all')">Todos</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Asunto</th><th>Descripción</th><th>Usuario</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <tbody id="ticketsBody"><tr><td colspan="6" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PRODUCTOS ── -->
+    <section id="section-products" class="hidden">
+      <div class="page-header"><h1>Productos del Market</h1><p>Revisa y aprueba las publicaciones de los vendedores.</p></div>
+      <div class="card">
+        <div class="flex gap-2 mb-4">
+          <button class="btn btn-secondary btn-sm" onclick="filterProducts('pending')">⏳ Pendientes</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterProducts('approved')">✅ Aprobados</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterProducts('rejected')">❌ Rechazados</button>
+          <button class="btn btn-ghost btn-sm"     onclick="filterProducts('all')">Todos</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Imagen</th><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Vendedor</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="productsBody"><tr><td colspan="8" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CONVENIOS ── -->
+    <section id="section-convenios" class="hidden">
+      <div class="page-header"><h1>Convenios empresariales</h1></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Empresa</th><th>Email</th><th>Estado</th><th>Empleados</th><th>Fecha</th></tr></thead>
+            <tbody id="conveniosBody"><tr><td colspan="5" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NOTIFICACIONES ── -->
+    <section id="section-notify" class="hidden">
+      <div class="page-header"><h1>Enviar notificación manual</h1></div>
+      <div class="card" style="max-width:520px">
+        <div class="form-group mb-3"><label>Usuario ID</label><input type="text" id="notifUserIdDirect" placeholder="UID del usuario en Firestore"/></div>
+        <div class="form-group mb-3"><label>Título</label><input type="text" id="notifTitleDirect" placeholder="Título"/></div>
+        <div class="form-group mb-4"><label>Mensaje</label><textarea id="notifBodyDirect" rows="3" style="resize:vertical" placeholder="Cuerpo de la notificación"></textarea></div>
+        <button class="btn btn-primary" onclick="sendNotifDirect()">📤 Enviar FCM</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module">
+import { auth, db, BACKEND_URL }                                    from './assets/js/firebase-config.js';
+import { onAuthStateChanged, signOut }                              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { collection, getDocs, getDoc, query, where, orderBy,
+         limit, updateDoc, doc }                                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+let currentUser   = null;
+let allUsers      = [];
+let allRecharges  = [];
+let currentFilter = 'pending';
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  if (!snap.exists() || snap.data().role !== 'admin') { window.location.href = 'login.html'; return; }
+  loadAll();
+});
+
+
+async function loadAll() {
+  await Promise.all([ loadUsers(), loadRecharges(), loadCards(), loadTxs(), loadTickets(), loadConvenios(), loadProducts() ]);
+  updateStats();
+}
+
+async function loadUsers() {
+  const snap = await getDocs(collection(db,'users'));
+  allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderUsers(allUsers);
+  document.getElementById('statUsers').textContent = allUsers.length;
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:24px">Sin usuarios</td></tr>'; return; }
+  const levelColors = { vital:'badge-muted', activo:'badge-info', saludPlus:'badge-success', elite:'badge-warning' };
+  tbody.innerHTML = users.map(u => `<tr>
+    <td class="font-bold">${u.name||'—'}</td>
+    <td class="text-secondary">${u.email}</td>
+    <td><span class="badge badge-info">${u.role}</span></td>
+    <td class="text-success">${fmt(u.balance||0)}</td>
+    <td><span class="badge ${levelColors[u.membershipLevel]||'badge-muted'}">${u.membershipLevel||'vital'}</span></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="notifyUser('${u.id}')">🔔</button></td>
+  </tr>`).join('');
+}
+
+window.filterUsers = () => {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  renderUsers(allUsers.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)));
+};
+
+async function loadRecharges() {
+  const snap = await getDocs(query(collection(db,'rechargeRequests'), orderBy('requestedAt','desc'), limit(100)));
+  allRecharges = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  filterRecharges('pending');
+  document.getElementById('statPending').textContent = allRecharges.filter(r=>r.status==='pending').length;
+  renderPendingOverview();
+}
+
+function renderPendingOverview() {
+  const pending = allRecharges.filter(r=>r.status==='pending').slice(0,5);
+  const el = document.getElementById('pendingRechargesOverview');
+  if (!pending.length) { el.textContent = 'No hay recargas pendientes. ✓'; return; }
+  el.innerHTML = pending.map(r => `<div class="flex justify-between items-center" style="padding:10px 0;border-bottom:1px solid var(--border)">
+    <div><div class="font-bold">${fmt(r.amount)} <span class="text-muted">· ${r.method}</span></div><div class="text-xs text-muted">${r.userId}</div></div>
+    <div class="flex gap-2">
+      <button class="btn btn-success btn-sm" onclick="approveRecharge('${r.id}')">✓ Aprobar</button>
+      <button class="btn btn-danger btn-sm" onclick="rejectRecharge('${r.id}','${r.amount}')">✕ Rechazar</button>
+    </div>
+  </div>`).join('');
+}
+
+window.filterRecharges = (status) => {
+  currentFilter = status;
+  const list = allRecharges.filter(r => r.status === status);
+  const stMap = { pending:'badge-warning', approved:'badge-success', rejected:'badge-danger' };
+  const tbody = document.getElementById('rechargesBody');
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:24px">Sin solicitudes ${status}</td></tr>`; return; }
+  tbody.innerHTML = list.map(r => `<tr>
+    <td class="text-secondary text-xs">${r.userId?.substring(0,12)}…</td>
+    <td class="font-bold text-success">${fmt(r.amount)}</td>
+    <td>${r.method}</td>
+    <td class="text-secondary text-xs">${r.proofNote||'—'}</td>
+    <td><span class="badge ${stMap[r.status]}">${r.status}</span></td>
+    <td class="text-xs text-muted">${r.requestedAt?.toDate?r.requestedAt.toDate().toLocaleDateString('es-CO'):'—'}</td>
+    <td>${r.status==='pending'?`<div class="flex gap-1"><button class="btn btn-success btn-sm" onclick="approveRecharge('${r.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="rejectRecharge('${r.id}','${r.amount}')">✕</button></div>`:'—'}</td>
+  </tr>`).join('');
+};
+
+window.approveRecharge = (id) => {
+  document.getElementById('confirmTitle').textContent = 'Aprobar recarga';
+  document.getElementById('confirmMsg').textContent   = `¿Confirmas la aprobación de la solicitud ${id.substring(0,12)}…?`;
+  document.getElementById('confirmRejectReason').classList.add('hidden');
+  document.getElementById('confirmActionBtn').onclick = async () => {
+    closeModal('confirmModal');
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/recharges/approve`, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ rechargeRequestId: id }),
+    });
+    const data = await res.json();
+    showToast(data.success ? `Recarga aprobada. Nuevo nivel: ${data.newMembershipLevel}` : data.error, data.success?'success':'error');
+    loadRecharges();
+  };
+  document.getElementById('confirmModal').classList.remove('hidden');
+};
+
+window.rejectRecharge = (id) => {
+  document.getElementById('confirmTitle').textContent = 'Rechazar recarga';
+  document.getElementById('confirmMsg').textContent   = `Indica el motivo del rechazo:`;
+  document.getElementById('confirmRejectReason').classList.remove('hidden');
+  document.getElementById('confirmActionBtn').onclick = async () => {
+    const reason = document.getElementById('rejectReasonInput').value.trim();
+    if (!reason) { showToast('Escribe un motivo', 'warning'); return; }
+    closeModal('confirmModal');
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/recharges/reject`, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ rechargeRequestId: id, reason }),
+    });
+    const data = await res.json();
+    showToast(data.success ? 'Recarga rechazada' : data.error, data.success?'info':'error');
+    loadRecharges();
+  };
+  document.getElementById('confirmModal').classList.remove('hidden');
+};
+
+async function loadCards() {
+  const snap = await getDocs(collection(db,'cards'));
+  const active = snap.docs.filter(d=>d.data().status==='active').length;
+  document.getElementById('statCards').textContent = active;
+  const tbody = document.getElementById('cardsBody');
+  if (snap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:24px">Sin tarjetas registradas</td></tr>'; return; }
+  tbody.innerHTML = snap.docs.map(d => {
+    const c = d.data(); const uid = d.id;
+    return `<tr>
+      <td style="font-family:monospace;font-size:12px">${uid}</td>
+      <td class="text-xs text-secondary">${c.userId}</td>
+      <td><span class="badge ${c.status==='active'?'badge-success':'badge-danger'}">${c.status}</span></td>
+      <td class="text-xs text-muted">${c.registeredAt?.toDate?c.registeredAt.toDate().toLocaleDateString('es-CO'):'—'}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="toggleCard('${uid}','${c.userId}','${c.status}')">${c.status==='active'?'🔒 Bloquear':'🔓 Activar'}</button></td>
+    </tr>`;
+  }).join('');
+}
+
+window.linkCard = async () => {
+  const cardUid = document.getElementById('newCardUid').value.trim().toUpperCase();
+  const targetUserId = document.getElementById('newCardUserId').value.trim();
+  if (!cardUid || !targetUserId) { showToast('Ingresa el UID y el ID del usuario', 'warning'); return; }
+
+  const token = await currentUser.getIdToken();
+  const res = await fetch(`${BACKEND_URL}/cards/link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ cardUid, targetUserId }),
+  });
+  const data = await res.json();
+  showToast(data.success ? 'Tarjeta vinculada correctamente ✓' : data.error, data.success ? 'success' : 'error');
+  if (data.success) {
+    document.getElementById('newCardUid').value = '';
+    document.getElementById('newCardUserId').value = '';
+    loadCards();
+  }
+};
+
+window.toggleCard = async (uid, userId, status) => {
+  const action = status === 'active' ? 'block' : 'unblock';
+  const token = await currentUser.getIdToken();
+  const res = await fetch(`${BACKEND_URL}/cards/block`, {
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ cardUid: uid, action }),
+  });
+  const data = await res.json();
+  showToast(data.success ? `Tarjeta ${data.newStatus}` : data.error, data.success?'success':'error');
+  loadCards();
+};
+
+async function loadTxs() {
+  const snap = await getDocs(query(collection(db,'transactions'), orderBy('timestamp','desc'), limit(50)));
+  document.getElementById('statTx').textContent = snap.size;
+  const typeClass = { payment:'badge-danger', recharge:'badge-success', cashback:'badge-info', bonus:'badge-warning', referral:'badge-success' };
+  document.getElementById('allTxBody').innerHTML = snap.docs.map(d => {
+    const t = d.data();
+    const date = t.timestamp?.toDate?t.timestamp.toDate().toLocaleDateString('es-CO'):'—';
+    return `<tr><td><span class="badge ${typeClass[t.type]||'badge-muted'}">${t.type}</span></td><td class="text-xs text-secondary">${(t.buyerId||'—').substring(0,12)}…</td><td class="text-xs text-secondary">${t.sellerId?(t.sellerId.substring(0,12)+'…'):'—'}</td><td class="font-bold">${fmt(t.amount)}</td><td class="text-info">${t.cashbackAmount?fmt(t.cashbackAmount):'—'}</td><td class="text-xs text-muted">${date}</td></tr>`;
+  }).join('');
+}
+
+let allTickets = [];
+let allProducts = [];
+
+async function loadTickets() {
+  const snap = await getDocs(query(collection(db,'tickets'), orderBy('createdAt','desc'), limit(100)));
+  allTickets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  filterTickets('open');
+}
+
+window.filterTickets = (status) => {
+  const list = status === 'all' ? allTickets : allTickets.filter(t => t.status === status);
+  const stMap = { open:'badge-info', inProgress:'badge-warning', closed:'badge-muted' };
+  const stLabel = { open:'Abierto', inProgress:'En progreso', closed:'Cerrado' };
+  const tbody = document.getElementById('ticketsBody');
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:24px">Sin tickets ${status==='all'?'':status}.</td></tr>`; return; }
+  tbody.innerHTML = list.map(t => {
+    const date = t.createdAt?.toDate ? t.createdAt.toDate().toLocaleDateString('es-CO') : '—';
+    const answered = t.adminResponse ? 'ticket-answered' : '';
+    return `<tr class="${answered}">
+      <td class="font-bold">${t.subject||'—'}</td>
+      <td class="ticket-desc-cell">${t.description||'—'}</td>
+      <td class="text-xs text-secondary">${(t.userId||'—').substring(0,12)}…</td>
+      <td><span class="badge ${stMap[t.status]||'badge-muted'}">${stLabel[t.status]||t.status}</span>${t.adminResponse?'<span class="badge badge-info" style="margin-left:4px;font-size:10px">Respondido</span>':''}</td>
+      <td class="text-xs text-muted">${date}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="openTicketModal('${t.id}')">👁️ Ver / Responder</button></td>
+    </tr>`;
+  }).join('');
+};
+
+let currentTicketId = null;
+window.openTicketModal = (id) => {
+  const t = allTickets.find(x => x.id === id);
+  if (!t) return;
+  currentTicketId = id;
+  document.getElementById('tktSubject').textContent = t.subject || '—';
+  document.getElementById('tktUser').textContent = t.userId || '—';
+  document.getElementById('tktDesc').textContent = t.description || '—';
+  document.getElementById('tktResponse').value = '';
+  if (t.adminResponse) {
+    document.getElementById('tktRespText').textContent = t.adminResponse;
+    document.getElementById('tktAdminResp').classList.remove('hidden');
+  } else {
+    document.getElementById('tktAdminResp').classList.add('hidden');
+  }
+  const isClosed = t.status === 'closed';
+  document.getElementById('tktRespondBtn').disabled = isClosed;
+  document.getElementById('tktCloseBtn').disabled   = isClosed;
+  document.getElementById('tktCloseBtn').textContent = isClosed ? '✓ Cerrado' : '✓ Cerrar ticket';
+  document.getElementById('ticketModal').classList.remove('hidden');
+};
+
+window.sendTicketResponse = async () => {
+  const response = document.getElementById('tktResponse').value.trim();
+  if (!response) { showToast('Escribe una respuesta', 'warning'); return; }
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/tickets/${currentTicketId}/respond`, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ response }),
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Respuesta enviada ✓', 'success'); closeModal('ticketModal'); loadTickets(); }
+    else showToast(data.error, 'error');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+};
+
+window.closeTicketAction = async () => {
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/tickets/${currentTicketId}/close`, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Ticket cerrado ✓', 'success'); closeModal('ticketModal'); loadTickets(); }
+    else showToast(data.error, 'error');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+};
+
+async function loadProducts() {
+  try {
+    const token = await currentUser.getIdToken();
+    const res   = await fetch(`${BACKEND_URL}/products/all`, { headers:{'Authorization':'Bearer '+token} });
+    const data  = await res.json();
+    if (!data.success) throw new Error(data.error);
+    allProducts = data.products || [];
+    filterProducts('pending');
+  } catch (err) { console.error('[loadProducts]', err); }
+}
+
+window.filterProducts = (status) => {
+  const list = status === 'all' ? allProducts : allProducts.filter(p => p.status === status);
+  const stMap  = { pending:'badge-warning', approved:'badge-success', rejected:'badge-danger' };
+  const stLabel = { pending:'⏳ Pendiente', approved:'✅ Aprobado', rejected:'❌ Rechazado' };
+  const tbody = document.getElementById('productsBody');
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:24px">Sin productos ${status==='all'?'':status}.</td></tr>`; return; }
+  tbody.innerHTML = list.map(p => {
+    const img = p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':'📦');
+    const actions = p.status==='pending'
+      ? `<button class="btn btn-primary btn-sm" onclick="openProductModal('${p.id}')">👁️ Revisar</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="openProductModal('${p.id}')">Ver</button>`;
+    return `<tr>
+      <td><div class="prod-thumb-sm">${img}</div></td>
+      <td class="font-bold">${p.name}</td>
+      <td><span class="badge ${p.type==='service'?'badge-info':'badge-muted'}">${p.type==='service'?'Servicio':'Producto'}</span></td>
+      <td class="text-success font-bold">${fmt(p.price)}</td>
+      <td>${p.type==='service'?'∞':p.stock}</td>
+      <td class="text-xs text-secondary">${p.sellerName||'—'}</td>
+      <td><span class="badge ${stMap[p.status]||'badge-muted'}">${stLabel[p.status]||p.status}</span></td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+};
+
+let currentProductId = null;
+window.openProductModal = (id) => {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  currentProductId = id;
+  document.getElementById('prodModalTitle').textContent  = p.name;
+  document.getElementById('prodModalType').textContent   = p.type === 'service' ? '⚙️ Servicio' : '📦 Producto';
+  document.getElementById('prodModalPrice').textContent  = fmt(p.price);
+  document.getElementById('prodModalStock').textContent  = p.type==='service'?'Sin límite':p.stock;
+  document.getElementById('prodModalSeller').textContent = p.sellerName || p.sellerId;
+  document.getElementById('prodModalDesc').textContent   = p.description;
+  const imgEl = document.getElementById('prodModalImg');
+  imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':'📦');
+  document.getElementById('prodRejectReasonWrap').classList.add('hidden');
+  document.getElementById('prodModalActions').classList.remove('hidden');
+  document.getElementById('prodRejectConfirm').classList.add('hidden');
+  const isPending = p.status === 'pending';
+  document.getElementById('prodModalActions').style.display = isPending ? '' : 'none';
+  document.getElementById('productModal').classList.remove('hidden');
+};
+
+window.approveProduct = async () => {
+  try {
+    const token = await currentUser.getIdToken();
+    const res   = await fetch(`${BACKEND_URL}/products/${currentProductId}/approve`, {
+      method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Producto aprobado ✅', 'success'); closeModal('productModal'); loadProducts(); }
+    else showToast(data.error, 'error');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+};
+
+window.showRejectProduct = () => {
+  document.getElementById('prodRejectReasonWrap').classList.remove('hidden');
+  document.getElementById('prodModalActions').classList.add('hidden');
+  document.getElementById('prodRejectConfirm').classList.remove('hidden');
+};
+
+window.cancelReject = () => {
+  document.getElementById('prodRejectReasonWrap').classList.add('hidden');
+  document.getElementById('prodModalActions').classList.remove('hidden');
+  document.getElementById('prodRejectConfirm').classList.add('hidden');
+};
+
+window.confirmRejectProduct = async () => {
+  const reason = document.getElementById('prodRejectReasonInput').value.trim();
+  if (!reason) { showToast('Escribe un motivo de rechazo', 'warning'); return; }
+  try {
+    const token = await currentUser.getIdToken();
+    const res   = await fetch(`${BACKEND_URL}/products/${currentProductId}/reject`, {
+      method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ reason }),
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Producto rechazado', 'info'); closeModal('productModal'); loadProducts(); }
+    else showToast(data.error, 'error');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+};
+
+async function loadConvenios() {
+  const snap = await getDocs(collection(db,'convenios'));
+  const stMap = { pending:'badge-warning', active:'badge-success', inactive:'badge-muted' };
+  document.getElementById('conveniosBody').innerHTML = snap.docs.map(d => {
+    const c = d.data();
+    return `<tr><td class="font-bold">${c.companyName}</td><td class="text-secondary">${c.contactEmail}</td><td><span class="badge ${stMap[c.status]||'badge-muted'}">${c.status}</span></td><td>${(c.employees||[]).length}</td><td class="text-xs text-muted">${c.createdAt?.toDate?c.createdAt.toDate().toLocaleDateString('es-CO'):'—'}</td></tr>`;
+  }).join('');
+}
+
+function updateStats() {}
+
+window.notifyUser = (uid) => {
+  document.getElementById('notifUserIdDirect').value = uid;
+  showSection('notify');
+};
+
+window.sendNotifDirect = async () => {
+  const userId = document.getElementById('notifUserIdDirect').value.trim();
+  const title  = document.getElementById('notifTitleDirect').value.trim();
+  const body   = document.getElementById('notifBodyDirect').value.trim();
+  if (!userId || !title || !body) { showToast('Completa todos los campos', 'warning'); return; }
+  const token = await currentUser.getIdToken();
+  const res = await fetch(`${BACKEND_URL}/notify`, {
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ userId, title, body }),
+  });
+  const data = await res.json();
+  showToast(data.success ? 'Notificación enviada ✓' : data.error, data.success?'success':'error');
+};
+
+window.showSection = (name) => {
+  document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(`section-${name}`)?.classList.remove('hidden');
+  document.getElementById(`nav-${name}`)?.classList.add('active');
+};
+
+window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+window.logout = () => signOut(auth).then(() => window.location.href = 'login.html');
+window.showToast = (msg, type='info') => {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`; t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+};
+function fmt(n) { return '$' + Number(n).toLocaleString('es-CO'); }
+</script>
+</body>
+</html>

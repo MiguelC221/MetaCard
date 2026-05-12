@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetaCard — Accede a tu cuenta</title>
+  <meta name="description" content="Plataforma universitaria de pagos con tarjeta NFC. Ingresa a tu cuenta MetaCard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body class="auth-page">
+
+  <!-- Fondo animado -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="auth-container">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="12" fill="url(#grad)"/>
+          <path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/>
+          <defs><linearGradient id="grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/>
+          </linearGradient></defs>
+        </svg>
+      </div>
+      <span class="logo-text">MetaCard</span>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card glass">
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" id="tabLogin"    onclick="switchTab('login')">Iniciar sesión</button>
+        <button class="tab-btn"        id="tabRegister" onclick="switchTab('register')">Crear cuenta</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="loginEmail">Correo institucional</label>
+          <input type="email" id="loginEmail" placeholder="usuario@universidad.edu.co" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Contraseña</label>
+          <div class="input-eye">
+            <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="eye-btn" onclick="togglePwd('loginPassword',this)">👁</button>
+          </div>
+        </div>
+        <div id="loginError" class="form-error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+          <span class="btn-text">Ingresar</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+
+      <!-- REGISTRO -->
+      <form id="registerForm" class="auth-form hidden" onsubmit="handleRegister(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="regName">Nombre completo</label>
+            <input type="text" id="regName" placeholder="Tu nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="regId">Identificación</label>
+            <input type="text" id="regId" placeholder="Cédula / código" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Correo institucional</label>
+          <input type="email" id="regEmail" placeholder="usuario@universidad.edu.co" required />
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Contraseña</label>
+          <div class="input-eye">
+            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" required minlength="6" />
+            <button type="button" class="eye-btn" onclick="togglePwd('regPassword',this)">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="regReferral">Código de referido <span class="text-muted">(opcional)</span></label>
+          <input type="text" id="regReferral" placeholder="Código de tu amigo" />
+        </div>
+        <div id="registerError" class="form-error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="registerBtn">
+          <span class="btn-text">Crear cuenta</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+
+    <p class="auth-footer">MetaCard © 2025 · Plataforma universitaria de pagos NFC</p>
+  </div>
+
+  <!-- Firebase SDK v9 compat (UMD) — no requiere bundler ni top-level await -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ── Configuración Firebase ────────────────────────────────────────────────
+    const firebaseConfig = {
+      apiKey:            "AIzaSyB5IzAXms4cbjOst4ER9FufMgWCj00NnDA",
+      authDomain:        "metacard-2026f.firebaseapp.com",
+      projectId:         "metacard-2026f",
+      storageBucket:     "metacard-2026f.firebasestorage.app",
+      messagingSenderId: "713521444873",
+      appId:             "1:713521444873:web:261ebc5117cb9a779e20d8",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    // ── Redirigir si ya tiene sesión ─────────────────────────────────────────
+    auth.onAuthStateChanged(async user => {
+      if (!user) return;
+      try {
+        const snap = await db.collection('users').doc(user.uid).get();
+        if (snap.exists) redirectByRole(snap.data().role);
+      } catch(e) { console.warn('onAuthState error', e); }
+    });
+
+    function redirectByRole(role) {
+      const map = { admin: 'admin.html', seller: 'seller.html', support: 'admin.html' };
+      window.location.href = map[role] || 'buyer.html';
+    }
+
+    // ── UI helpers ───────────────────────────────────────────────────────────
+    window.switchTab = (tab) => {
+      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab !== 'login');
+    };
+
+    window.togglePwd = (id, btn) => {
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+      btn.textContent = el.type === 'password' ? '👁' : '🙈';
+    };
+
+    function setLoading(btnId, v) {
+      const btn = document.getElementById(btnId);
+      btn.querySelector('.btn-text').classList.toggle('hidden', v);
+      btn.querySelector('.btn-spinner').classList.toggle('hidden', !v);
+      btn.disabled = v;
+    }
+    function showErr(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.classList.remove('hidden');
+    }
+    function clearErr(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function friendlyError(code) {
+      const map = {
+        'auth/user-not-found':       'No existe una cuenta con ese correo.',
+        'auth/wrong-password':       'Contraseña incorrecta.',
+        'auth/invalid-credential':   'Correo o contraseña incorrectos.',
+        'auth/email-already-in-use': 'Ese correo ya está registrado.',
+        'auth/weak-password':        'La contraseña debe tener al menos 6 caracteres.',
+        'auth/invalid-email':        'Formato de correo inválido.',
+        'auth/too-many-requests':    'Demasiados intentos. Espera unos minutos.',
+        'auth/network-request-failed': 'Sin conexión. Verifica tu internet.',
+      };
+      return map[code] || `Error (${code}). Intenta de nuevo.`;
+    }
+
+    // ── LOGIN ────────────────────────────────────────────────────────────────
+    window.handleLogin = async (e) => {
+      e.preventDefault();
+      setLoading('loginBtn', true);
+      clearErr('loginError');
+      try {
+        const cred = await auth.signInWithEmailAndPassword(
+          document.getElementById('loginEmail').value.trim(),
+          document.getElementById('loginPassword').value
+        );
+        const snap = await db.collection('users').doc(cred.user.uid).get();
+        redirectByRole(snap.exists ? snap.data().role : 'buyer');
+      } catch (err) {
+        showErr('loginError', friendlyError(err.code));
+        setLoading('loginBtn', false);
+      }
+    };
+
+    // ── REGISTRO ─────────────────────────────────────────────────────────────
+    window.handleRegister = async (e) => {
+      e.preventDefault();
+      setLoading('registerBtn', true);
+      clearErr('registerError');
+
+      const name     = document.getElementById('regName').value.trim();
+      const idNum    = document.getElementById('regId').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const referral = document.getElementById('regReferral').value.trim();
+
+      try {
+        // 1. Crear usuario en Firebase Auth
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+        // 2. Registrar en el backend (crea el doc en Firestore usando Admin SDK)
+        const token = await cred.user.getIdToken();
+        const res = await fetch(`${window.location.origin}/users/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            uid: cred.user.uid,
+            name,
+            email,
+            identification: idNum,
+            referral: referral || null
+          })
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Error al guardar en base de datos');
+        }
+
+        // 3. Redirigir al dashboard
+        window.location.href = 'buyer.html';
+
+      } catch (err) {
+        console.error('[register]', err);
+        showErr('registerError', err.message || friendlyError(err.code));
+        setLoading('registerBtn', false);
+      }
+    };
+  </script>
+</body>
+</html>
