@@ -10,6 +10,7 @@ const verifyToken = async (req, res, next) => {
   }
   try {
     req.user = await auth.verifyIdToken(header.split('Bearer ')[1]);
+    req.uid  = req.user.uid;   // atajo para usar req.uid en todas las rutas
     next();
   } catch {
     return res.status(401).json({ success: false, error: 'Token inválido o expirado' });

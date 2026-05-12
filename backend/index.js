@@ -15,6 +15,9 @@ const cardsRouter         = require('./routes/cards');
 const bonusesRouter       = require('./routes/bonuses');
 const notificationsRouter = require('./routes/notifications');
 const membershipRouter    = require('./routes/membership');
+const productsRouter      = require('./routes/products');
+const marketRouter        = require('./routes/market');
+const ticketsRouter       = require('./routes/tickets');
 
 const app = express();
 
@@ -56,6 +59,9 @@ app.use('/cards',         cardsRouter);
 app.use('/bonuses',       bonusesRouter);
 app.use('/notify',        notificationsRouter);
 app.use('/membership',    membershipRouter);
+app.use('/products',      productsRouter);
+app.use('/market',        marketRouter);
+app.use('/tickets',       ticketsRouter);
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
