@@ -85,7 +85,7 @@ router.post('/referral', verifyToken, async (req, res) => {
       count: FieldValue.increment(1),
       referredUsers: FieldValue.arrayUnion({
         userId:          newBuyerId,
-        firstPurchaseAt: FieldValue.serverTimestamp(),
+        firstPurchaseAt: new Date(),
         bonusPaid:       true,
       }),
     }, { merge: true });

@@ -60,8 +60,8 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-/* ─── GET /approved — catálogo público (buyers) ─────────────────────── */
-router.get('/approved', verifyToken, async (req, res) => {
+/* ─── GET /approved — catálogo público (sin auth requerida) ─────────── */
+router.get('/approved', async (req, res) => {
   try {
     const snap = await db.collection('products')
       .where('status', '==', 'approved')
