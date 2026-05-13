@@ -18,6 +18,7 @@ const membershipRouter    = require('./routes/membership');
 const productsRouter      = require('./routes/products');
 const marketRouter        = require('./routes/market');
 const ticketsRouter       = require('./routes/tickets');
+const conveniosRouter     = require('./routes/convenios');
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/membership',    membershipRouter);
 app.use('/products',      productsRouter);
 app.use('/market',        marketRouter);
 app.use('/tickets',       ticketsRouter);
+app.use('/convenios',     conveniosRouter);
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {

@@ -70,7 +70,34 @@ router.post('/purchase', verifyToken, async (req, res) => {
         return res.status(400).json({ success: false, error: `Stock insuficiente. Disponible: ${product.stock}` });
     }
 
-    const totalAmount = product.price * qty;
+    let totalAmount = product.price * qty;
+    let discountApplied = 0;
+    let discountPercentage = 0;
+    let convenioId = null;
+
+    /* ── 7.5 Verificar descuento por convenio ─────────────────────── */
+    const userEmail = buyer.email?.toLowerCase() || '';
+    const emailDomain = userEmail.split('@')[1];
+    
+    if (emailDomain) {
+      const conveniosSnap = await db.collection('convenios')
+        .where('emailDomain', '==', emailDomain)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+
+      if (!conveniosSnap.empty) {
+        const convenio = conveniosSnap.docs[0].data();
+        // Seleccionar descuento según tipo de producto
+        const isService = product.type === 'service';
+        discountPercentage = isService 
+          ? (convenio.discountServices || 0)
+          : (convenio.discountProducts || 0);
+        discountApplied = Math.round(totalAmount * (discountPercentage / 100));
+        totalAmount = totalAmount - discountApplied;
+        convenioId = conveniosSnap.docs[0].id;
+      }
+    }
 
     if ((buyer.balance || 0) < totalAmount)
       return res.status(402).json({ success: false, error: 'Saldo insuficiente', balance: buyer.balance || 0 });
@@ -106,11 +133,15 @@ router.post('/purchase', verifyToken, async (req, res) => {
       productName:   product.name,
       productType:   product.type,
       quantity:      qty,
+      originalPrice: product.price * qty,
+      discountApplied,
+      discountPercentage,
       amount:        totalAmount,
       cardId:        cardId.toUpperCase(),
+      convenioId,
       balanceBefore,
       balanceAfter,
-      description:   `Compra: ${product.name} x${qty}`,
+      description:   `Compra: ${product.name} x${qty}${discountApplied > 0 ? ` (DESC: ${discountPercentage}%)` : ''}`,
     });
 
     await batch.commit();
@@ -124,11 +155,15 @@ router.post('/purchase', verifyToken, async (req, res) => {
     }
 
     return res.json({
-      success:       true,
-      transactionId: txId,
-      newBalance:    balanceAfter,
-      productName:   product.name,
-      amount:        totalAmount,
+      success:              true,
+      transactionId:        txId,
+      newBalance:           balanceAfter,
+      productName:          product.name,
+      originalAmount:       product.price * qty,
+      discountApplied,
+      discountPercentage,
+      finalAmount:          totalAmount,
+      ...(discountApplied > 0 && { discountMessage: `¡Descuento por convenio aplicado! -$${discountApplied.toLocaleString('es-CO')}` }),
     });
 
   } catch (err) {

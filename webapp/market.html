@@ -196,10 +196,8 @@
       <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#mg)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="mg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
       <span>MetaCard Market</span>
     </div>
-    <div class="topbar-right">
-      <span id="topbarName" class="text-secondary text-sm"></span>
-      <a href="buyer.html" class="btn btn-ghost btn-sm">← Mi cuenta</a>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+    <div class="topbar-right" id="topbarRight">
+      <!-- se rellena por JS según sesión -->
     </div>
   </header>
 
@@ -260,26 +258,39 @@ import { onAuthStateChanged, signOut }                 from 'https://www.gstatic
 import { collection, query, where, orderBy,
          limit, getDocs }                              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-let currentUser = null;
-let allProducts = [];
-let activeFilter = 'all';
+let currentUser   = null;
+let allProducts   = [];
+let activeFilter  = 'all';
 let selectedProductId = null;
+let authReady     = false;
 
+// ── Auth: no obligatorio — pero detectamos si hay sesión ──────────────
 onAuthStateChanged(auth, async user => {
-  if (!user) { window.location.href = 'login.html'; return; }
-  currentUser = user;
-  document.getElementById('topbarName').textContent = user.displayName || user.email;
+  currentUser = user || null;
+  authReady   = true;
+
+  const right = document.getElementById('topbarRight');
+  if (user) {
+    right.innerHTML = `
+      <span class="text-secondary text-sm">${user.displayName || user.email}</span>
+      <a href="buyer.html" class="btn btn-ghost btn-sm">← Mi cuenta</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>`;
+  } else {
+    right.innerHTML = `
+      <a href="login.html" class="btn btn-primary btn-sm">🔑 Iniciar sesión</a>`;
+  }
+
+  // Cargar catálogo siempre (es público)
   loadCatalog();
-  loadPurchases();
+
+  // "Mis compras" solo si hay sesión
+  if (user) loadPurchases();
 });
 
-/* ── Cargar catálogo ───────────────────────────────────────────────── */
+/* ── Cargar catálogo (público, sin token) ──────────────────── */
 async function loadCatalog() {
   try {
-    const token = await currentUser.getIdToken();
-    const res   = await fetch(`${BACKEND_URL}/products/approved`, {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
+    const res  = await fetch(`${BACKEND_URL}/products/approved`);
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
     allProducts = data.products || [];
@@ -348,12 +359,19 @@ window.filterProducts = () => renderProducts();
 
 /* ── Modal de compra ─────────────────────────────────────────────── */
 window.openBuyModal = (productId) => {
+  // Si no hay sesión, pedir login en lugar de abrir el modal
+  if (!currentUser) {
+    showToast('Debes iniciar sesión para comprar', 'warning');
+    setTimeout(() => window.location.href = 'login.html', 1200);
+    return;
+  }
+
   const p = allProducts.find(x => x.id === productId);
   if (!p) return;
   selectedProductId = productId;
 
   const imgEl = document.getElementById('buyModalImg');
-  imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}"/>` : (p.type === 'service' ? '⚙️' : '📦');
+  imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}"/>` : (p.type === 'service' ? '⚙️' : '🛎️');
 
   document.getElementById('buyModalTitle').textContent = p.name;
   document.getElementById('buyModalType').className    = `product-type-badge ${p.type === 'service' ? 'type-service' : 'type-product'} mb-2`;
@@ -467,6 +485,12 @@ async function loadPurchases() {
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 window.showSection = (name) => {
+  // "Mis compras" requiere sesión
+  if (name === 'purchases' && !currentUser) {
+    showToast('Inicia sesión para ver tus compras', 'warning');
+    setTimeout(() => window.location.href = 'login.html', 1200);
+    return;
+  }
   document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
   document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`section-${name}`)?.classList.remove('hidden');
