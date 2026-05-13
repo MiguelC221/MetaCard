@@ -242,12 +242,70 @@
 
     <!-- ── CONVENIOS ── -->
     <section id="section-convenios" class="hidden">
-      <div class="page-header"><h1>Convenios empresariales</h1></div>
+      <div class="page-header">
+        <h1>Convenios empresariales</h1>
+        <button class="btn btn-primary" onclick="openConvenioModal()">➕ Nuevo convenio</button>
+      </div>
+
+      <!-- Formulario Modal -->
+      <div id="convenioModal" class="modal-overlay hidden" onclick="if(event.target.id==='convenioModal')closeModal('convenioModal')">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 id="convenioModalTitle">Nuevo convenio</h2>
+            <button class="modal-close" onclick="closeModal('convenioModal')">&times;</button>
+          </div>
+          <form onsubmit="submitConvenio(event)">
+            <div class="form-group mb-3">
+              <label>Nombre de empresa *</label>
+              <input type="text" id="convName" placeholder="Nombre de la empresa" required />
+            </div>
+            <div class="form-group mb-3">
+              <label>Dominio de email *</label>
+              <input type="text" id="convDomain" placeholder="empresa.com" required />
+            </div>
+            <div class="form-group mb-3">
+              <label>Email de contacto *</label>
+              <input type="email" id="convEmail" placeholder="contacto@empresa.com" required />
+            </div>
+            <div class="form-group mb-3">
+              <label>Teléfono</label>
+              <input type="tel" id="convPhone" placeholder="Número de teléfono" />
+            </div>
+            <div class="grid-2" style="gap:12px">
+              <div class="form-group mb-3">
+                <label>Descuento Productos (%) *</label>
+                <input type="number" id="convDiscountProducts" min="0" max="100" value="10" required />
+              </div>
+              <div class="form-group mb-3">
+                <label>Descuento Servicios (%) *</label>
+                <input type="number" id="convDiscountServices" min="0" max="100" value="10" required />
+              </div>
+            </div>
+            <div class="form-group mb-3">
+              <label>Descripción</label>
+              <textarea id="convDesc" rows="3" placeholder="Detalles del convenio" style="resize:vertical"></textarea>
+            </div>
+            <div class="form-group mb-3">
+              <label>Estado *</label>
+              <select id="convStatus" required>
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+              </select>
+            </div>
+            <div class="flex gap-2 justify-end">
+              <button type="button" class="btn btn-secondary" onclick="closeModal('convenioModal')">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar convenio</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tabla de convenios -->
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Empresa</th><th>Email</th><th>Estado</th><th>Empleados</th><th>Fecha</th></tr></thead>
-            <tbody id="conveniosBody"><tr><td colspan="5" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
+            <thead><tr><th>Empresa</th><th>Dominio</th><th>Email</th><th>Desc. Prod.</th><th>Desc. Serv.</th><th>Estado</th><th>Empleados</th><th>Acciones</th></tr></thead>
+            <tbody id="conveniosBody"><tr><td colspan="8" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -290,6 +348,9 @@ onAuthStateChanged(auth, async user => {
 async function loadAll() {
   await Promise.all([ loadUsers(), loadRecharges(), loadCards(), loadTxs(), loadTickets(), loadConvenios(), loadProducts() ]);
   updateStats();
+  // Restaurar sección guardada (o ir a overview por defecto)
+  const saved = localStorage.getItem('adminSection') || 'overview';
+  showSection(saved);
 }
 
 async function loadUsers() {
@@ -629,13 +690,161 @@ window.confirmRejectProduct = async () => {
 };
 
 async function loadConvenios() {
-  const snap = await getDocs(collection(db,'convenios'));
-  const stMap = { pending:'badge-warning', active:'badge-success', inactive:'badge-muted' };
-  document.getElementById('conveniosBody').innerHTML = snap.docs.map(d => {
-    const c = d.data();
-    return `<tr><td class="font-bold">${c.companyName}</td><td class="text-secondary">${c.contactEmail}</td><td><span class="badge ${stMap[c.status]||'badge-muted'}">${c.status}</span></td><td>${(c.employees||[]).length}</td><td class="text-xs text-muted">${c.createdAt?.toDate?c.createdAt.toDate().toLocaleDateString('es-CO'):'—'}</td></tr>`;
-  }).join('');
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/convenios`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    allConvenios = data.convenios || [];
+    const convenios = allConvenios;
+    const stMap = { active: 'badge-success', inactive: 'badge-muted', pending: 'badge-warning' };
+    const tbody = document.getElementById('conveniosBody');
+    
+    if (!convenios.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px">Sin convenios registrados</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = convenios.map(d => {
+      const c = d;
+      const date = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString('es-CO') : '—';
+      return `<tr>
+        <td class="font-bold">${c.companyName}</td>
+        <td class="text-secondary text-xs">${c.emailDomain}</td>
+        <td class="text-secondary text-xs">${c.contactEmail}</td>
+        <td><span class="badge badge-info">${c.discountProducts || 0}%</span></td>
+        <td><span class="badge badge-info">${c.discountServices || 0}%</span></td>
+        <td><span class="badge ${stMap[c.status] || 'badge-muted'}">${c.status}</span></td>
+        <td>${c.totalEmployees || 0}</td>
+        <td>
+          <div class="flex gap-1">
+            <button class="btn btn-primary btn-sm" onclick="editConvenio('${c.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteConvenio('${c.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('[loadConvenios]', err);
+    document.getElementById('conveniosBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar convenios</td></tr>';
+  }
 }
+
+let currentConvenioId = null;
+let allConvenios = [];
+
+window.openConvenioModal = (cId = null) => {
+  currentConvenioId = cId;
+  const domainInput = document.getElementById('convDomain');
+
+  if (cId) {
+    // Edición: cargar datos existentes
+    const c = allConvenios.find(x => x.id === cId);
+    if (!c) { showToast('No se encontraron datos del convenio', 'error'); return; }
+    document.getElementById('convenioModalTitle').textContent = 'Editar convenio';
+    document.getElementById('convName').value             = c.companyName || '';
+    domainInput.value                                      = c.emailDomain || '';
+    domainInput.disabled                                   = true;  // no se puede cambiar el dominio
+    document.getElementById('convEmail').value            = c.contactEmail || '';
+    document.getElementById('convPhone').value            = c.contactPhone || '';
+    document.getElementById('convDiscountProducts').value = c.discountProducts ?? 10;
+    document.getElementById('convDiscountServices').value = c.discountServices ?? 10;
+    document.getElementById('convDesc').value             = c.description || '';
+    document.getElementById('convStatus').value           = c.status || 'active';
+  } else {
+    // Nuevo convenio: limpiar formulario
+    document.getElementById('convenioModalTitle').textContent = 'Nuevo convenio';
+    document.getElementById('convName').value             = '';
+    domainInput.value                                      = '';
+    domainInput.disabled                                   = false;
+    document.getElementById('convEmail').value            = '';
+    document.getElementById('convPhone').value            = '';
+    document.getElementById('convDiscountProducts').value = '10';
+    document.getElementById('convDiscountServices').value = '10';
+    document.getElementById('convDesc').value             = '';
+    document.getElementById('convStatus').value           = 'active';
+  }
+  document.getElementById('convenioModal').classList.remove('hidden');
+};
+
+// ─── closeModal unificado (maneja convenioModal + cierre genérico) ──────────
+window.closeModal = (id) => {
+  if (id === 'convenioModal') {
+    document.getElementById('convDomain').disabled = false;
+  }
+  document.getElementById(id)?.classList.add('hidden');
+};
+
+window.submitConvenio = async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('convName').value.trim();
+  const domain = document.getElementById('convDomain').value.trim();
+  const email = document.getElementById('convEmail').value.trim();
+  const phone = document.getElementById('convPhone').value.trim();
+  const discountProducts = parseInt(document.getElementById('convDiscountProducts').value);
+  const discountServices = parseInt(document.getElementById('convDiscountServices').value);
+  const desc = document.getElementById('convDesc').value.trim();
+  const status = document.getElementById('convStatus').value;
+
+  if (!name || !domain || !email || isNaN(discountProducts) || isNaN(discountServices)) {
+    showToast('Completa los campos obligatorios', 'warning');
+    return;
+  }
+
+  try {
+    const token = await currentUser.getIdToken();
+    const method = currentConvenioId ? 'PUT' : 'POST';
+    const url = currentConvenioId 
+      ? `${BACKEND_URL}/convenios/${currentConvenioId}`
+      : `${BACKEND_URL}/convenios`;
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        companyName: name,
+        emailDomain: domain,
+        contactEmail: email,
+        contactPhone: phone,
+        discountProducts,
+        discountServices,
+        description: desc,
+        status
+      })
+    });
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    showToast(currentConvenioId ? 'Convenio actualizado ✓' : 'Convenio creado ✓', 'success');
+    closeModal('convenioModal');
+    loadConvenios();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+};
+
+window.editConvenio = (cId) => openConvenioModal(cId);
+
+window.deleteConvenio = async (cId) => {
+  if (!confirm('¿Eliminar este convenio?')) return;
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/convenios/${cId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    showToast('Convenio eliminado ✓', 'success');
+    loadConvenios();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+};
 
 function updateStats() {}
 
@@ -663,9 +872,10 @@ window.showSection = (name) => {
   document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`section-${name}`)?.classList.remove('hidden');
   document.getElementById(`nav-${name}`)?.classList.add('active');
+  localStorage.setItem('adminSection', name);  // guardar posición
 };
 
-window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+// (closeModal ya definido arriba — no redefinir aquí)
 window.logout = () => signOut(auth).then(() => window.location.href = 'login.html');
 window.showToast = (msg, type='info') => {
   const t = document.createElement('div');

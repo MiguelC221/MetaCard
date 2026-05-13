@@ -259,6 +259,9 @@ auth.onAuthStateChanged(async user => {
   loadCard();
   loadReferrals();
   loadTickets();
+  // Restaurar sección guardada
+  const saved = localStorage.getItem('buyerSection') || 'dashboard';
+  showSection(saved);
 });
 
 function renderDashboard() {
@@ -487,6 +490,7 @@ window.showSection = (name) => {
   document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`section-${name}`)?.classList.remove('hidden');
   document.getElementById(`nav-${name}`)?.classList.add('active');
+  localStorage.setItem('buyerSection', name);  // guardar posición
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

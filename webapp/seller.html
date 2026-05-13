@@ -209,6 +209,9 @@ onAuthStateChanged(auth, async user => {
   document.getElementById('sellerNameDisplay').textContent    = sellerData.name;
   loadHistory();
   loadMyProducts();
+  // Restaurar sección guardada
+  const saved = localStorage.getItem('sellerSection') || 'sell';
+  showSection(saved);
 });
 
 /* ── Cobrar NFC ────────────────────────────────────────────────────── */
@@ -402,6 +405,7 @@ window.showSection = (name) => {
   document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`section-${name}`)?.classList.remove('hidden');
   document.getElementById(`nav-${name}`)?.classList.add('active');
+  localStorage.setItem('sellerSection', name);  // guardar posición
   if (name === 'history')  loadHistory();
   if (name === 'products') loadMyProducts();
 };
