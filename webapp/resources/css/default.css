@@ -1,0 +1,166 @@
+  :root {
+      --accent: #6C63FF;
+      --accent-dark: #4f46c8;
+      --accent-teal: #22D3C8;
+      --black: #08091a;
+      --gray-dark: #111827;
+      --gray-mid: #1e2a3a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--black);
+      color: #f0f0f0;
+      overflow-x: hidden;
+    }
+
+    h1, h2, .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
+
+    /* NAVBAR */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,9,26,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(108,99,255,0.25);
+    }
+
+    /* HERO */
+    .hero-bg {
+      background: linear-gradient(135deg, #08091a 0%, #0d1535 50%, #081a1a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(108,99,255,0.18) 0%, transparent 55%),
+                  radial-gradient(ellipse at 20% 80%, rgba(34,211,200,0.10) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-card {
+      background: linear-gradient(135deg, #1e2a6a 0%, #0f1a48 60%, #081a20 100%);
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+      transform: perspective(900px) rotateY(-12deg) rotateX(4deg);
+      transition: transform 0.4s ease;
+    }
+    .hero-card:hover {
+      transform: perspective(900px) rotateY(-4deg) rotateX(2deg) translateY(-6px);
+    }
+
+    /* FLOATING BADGE */
+    .badge-red {
+      background: linear-gradient(90deg, var(--accent), var(--accent-teal));
+      color: #fff;
+      font-weight: 700;
+      border-radius: 9999px;
+      padding: 4px 14px;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* MEMBERSHIP TABLE */
+    .mem-row { transition: background 0.2s; }
+    .mem-row:hover { background: rgba(108,99,255,0.07); }
+
+    /* NIVEL BADGES */
+    .nivel-vital  { background:#1e2230; color:#9ca3af; }
+    .nivel-activo { background:#1a3a1a; color:#7dda6f; }
+    .nivel-salud  { background:#1a2a4a; color:#6bbfff; }
+    .nivel-elite  { background:#2a1a4a; color:#c084fc; }
+
+    /* BENEFITS CARDS */
+    .benefit-card {
+      background: var(--gray-dark);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .benefit-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(108,99,255,0.45);
+      box-shadow: 0 16px 40px rgba(108,99,255,0.12);
+    }
+
+    /* GRADIENT DIVIDER */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(108,99,255,0.5), rgba(34,211,200,0.4), transparent);
+    }
+
+    /* CTA BUTTON */
+    .btn-red {
+      background: linear-gradient(90deg, var(--accent), var(--accent-teal));
+      color: #fff;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 14px 36px;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      display: inline-block;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-red:hover {
+      opacity: 0.88;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(108,99,255,0.4);
+    }
+
+    .btn-outline {
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 12px 32px;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+      display: inline-block;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-outline:hover {
+      background: var(--accent);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    /* LOGIN BUTTON in navbar */
+    .btn-login {
+      background: linear-gradient(90deg, var(--accent), var(--accent-teal));
+      color: #fff;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 8px 22px;
+      font-size: 0.9rem;
+      transition: opacity 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-login:hover {
+      opacity: 0.85;
+      box-shadow: 0 4px 16px rgba(108,99,255,0.45);
+    }
+
+    /* STAT BOX */
+    .stat-box {
+      border-left: 3px solid var(--accent);
+      padding-left: 18px;
+    }
+
+    /* MOBILE MENU */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+
+    @media (max-width: 768px) {
+      .hero-card { transform: none; }
+      .hero-card:hover { transform: translateY(-4px); }
+    }
