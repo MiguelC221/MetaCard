@@ -7,6 +7,8 @@ const verifyToken                 = require('../middleware/verifyToken');
 const { isBalanceFrozen }         = require('../services/balanceService');
 const { addTransactionToBatch }   = require('../services/transactionService');
 const { sendNotificationToUser }  = require('../services/fcmService');
+const { logSecurityAlert }        = require('../services/securityService');
+const { issueCinemaTicket }       = require('../services/cineService');
 
 const LOW_BALANCE = Number(process.env.LOW_BALANCE_THRESHOLD) || 10000;
 
@@ -28,12 +30,16 @@ router.post('/purchase', verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Tarjeta no encontrada' });
 
     const card = cardSnap.data();
-    if (card.status !== 'active')
+    if (card.status !== 'active') {
+      await logSecurityAlert({ userId: card.userId, type: 'blocked_card_attempt', description: `Intento de compra en market con tarjeta inactiva (${cardId})`, metadata: { productId, quantity }, notifyUser: true });
       return res.status(403).json({ success: false, error: 'Tarjeta bloqueada o inactiva' });
+    }
 
     /* ── 2. Verificar que la tarjeta pertenece al usuario autenticado ─ */
-    if (card.userId !== req.uid)
+    if (card.userId !== req.uid) {
+      await logSecurityAlert({ userId: req.uid, type: 'unusual_movement', description: `Intento de usar tarjeta de otro usuario (${cardId})`, metadata: { cardOwner: card.userId, productId } });
       return res.status(403).json({ success: false, error: 'Esta tarjeta no te pertenece' });
+    }
 
     /* ── 3. Obtener comprador ──────────────────────────────────────── */
     const buyerSnap = await db.collection('users').doc(req.uid).get();
@@ -47,12 +53,16 @@ router.post('/purchase', verifyToken, async (req, res) => {
       return res.status(400).json({ success: false, error: 'No tienes un código privado configurado. Contacta soporte.' });
 
     const pinOk = await bcrypt.compare(String(privateCode), buyer.privateCodeHash);
-    if (!pinOk)
+    if (!pinOk) {
+      await logSecurityAlert({ userId: req.uid, type: 'invalid_pin', description: `Intento de compra con PIN incorrecto`, metadata: { productId } });
       return res.status(401).json({ success: false, error: 'Código privado incorrecto' });
+    }
 
     /* ── 5. Verificar balance y congelamiento ─────────────────────── */
-    if (isBalanceFrozen(buyer))
+    if (isBalanceFrozen(buyer)) {
+      await logSecurityAlert({ userId: req.uid, type: 'frozen_balance_attempt', description: `Intento de compra en market con saldo congelado`, metadata: { productId } });
       return res.status(403).json({ success: false, error: 'Tu saldo está congelado por inactividad' });
+    }
 
     /* ── 6. Obtener producto ──────────────────────────────────────── */
     const productRef  = db.collection('products').doc(productId);
@@ -99,8 +109,10 @@ router.post('/purchase', verifyToken, async (req, res) => {
       }
     }
 
-    if ((buyer.balance || 0) < totalAmount)
+    if ((buyer.balance || 0) < totalAmount) {
+      await logSecurityAlert({ userId: req.uid, type: 'insufficient_funds', description: `Intento de compra fallido por saldo insuficiente ($${totalAmount})`, metadata: { amount: totalAmount, balance: buyer.balance || 0, productId } });
       return res.status(402).json({ success: false, error: 'Saldo insuficiente', balance: buyer.balance || 0 });
+    }
 
     /* ── 8. Batch: descontar buyer, acreditar seller, decrementar stock */
     const balanceBefore = buyer.balance || 0;
@@ -146,7 +158,17 @@ router.post('/purchase', verifyToken, async (req, res) => {
 
     await batch.commit();
 
-    /* ── 9. Notificaciones ────────────────────────────────────────── */
+    /* ── 9. Emisión de boletos de cine (si aplica) ────────────────── */
+    let cinemaTicket = null;
+    if (product.type === 'cinema') {
+      const provider = product.cinemaProvider || 'Cine Colombia';
+      cinemaTicket = await issueCinemaTicket(req.uid, provider, product.name, qty).catch(e => {
+        console.error('[CineService] Error emitiendo boleto:', e);
+        return null;
+      });
+    }
+
+    /* ── 10. Notificaciones ────────────────────────────────────────── */
     sendNotificationToUser(req.uid, '🛒 Compra exitosa', `Compraste "${product.name}" por $${totalAmount.toLocaleString('es-CO')}.`, { type: 'market_purchase', txId }).catch(console.error);
     sendNotificationToUser(product.sellerId, '💰 Nueva venta', `Vendiste "${product.name}" x${qty} por $${totalAmount.toLocaleString('es-CO')}.`, { type: 'market_sale', txId }).catch(console.error);
 
@@ -164,6 +186,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
       discountPercentage,
       finalAmount:          totalAmount,
       ...(discountApplied > 0 && { discountMessage: `¡Descuento por convenio aplicado! -$${discountApplied.toLocaleString('es-CO')}` }),
+      ...(cinemaTicket && { cinemaTicket })
     });
 
   } catch (err) {

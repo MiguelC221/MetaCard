@@ -227,6 +227,7 @@
         <button class="filter-btn active" id="filter-all"     onclick="setFilter('all')">🔍 Todos</button>
         <button class="filter-btn"        id="filter-product" onclick="setFilter('product')">📦 Productos</button>
         <button class="filter-btn"        id="filter-service" onclick="setFilter('service')">⚙️ Servicios</button>
+        <button class="filter-btn"        id="filter-cinema"  onclick="setFilter('cinema')">🍿 Cines</button>
         <span class="text-xs text-muted" style="margin-left:auto" id="productCount"></span>
       </div>
 
@@ -326,16 +327,22 @@ function renderProducts() {
   }
 
   document.getElementById('productsGrid').innerHTML = filtered.map(p => {
-    const stockLabel = p.type === 'service' ? 'Servicio' : (p.stock > 0 ? `${p.stock} en stock` : '⚠️ Sin stock');
+    const stockLabel = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : (p.stock > 0 ? `${p.stock} en stock` : '⚠️ Sin stock');
     const outOfStock = p.type === 'product' && p.stock <= 0;
     const imgEl = p.imageUrl
       ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy"/>`
-      : (p.type === 'service' ? '⚙️' : '📦');
+      : (p.type === 'service' ? '⚙️' : (p.type === 'cinema' ? '🍿' : '📦'));
+      
+    let badgeClass = 'type-product';
+    let badgeText = '📦 Producto';
+    if (p.type === 'service') { badgeClass = 'type-service'; badgeText = '⚙️ Servicio'; }
+    if (p.type === 'cinema') { badgeClass = 'type-service'; badgeText = '🍿 Cine'; }
+      
     return `<div class="product-card" onclick="openBuyModal('${p.id}')">
       <div class="product-img">${imgEl}</div>
       <div class="product-body">
-        <div class="product-type-badge ${p.type === 'service' ? 'type-service' : 'type-product'}">
-          ${p.type === 'service' ? '⚙️ Servicio' : '📦 Producto'}
+        <div class="product-type-badge ${badgeClass}">
+          ${badgeText}
         </div>
         <div class="product-name">${esc(p.name)}</div>
         <div class="product-desc">${esc(p.description)}</div>
@@ -376,19 +383,26 @@ window.openBuyModal = (productId) => {
   selectedProductId = productId;
 
   const imgEl = document.getElementById('buyModalImg');
-  imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}"/>` : (p.type === 'service' ? '⚙️' : '🛎️');
+  imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}"/>` : (p.type === 'service' ? '⚙️' : (p.type === 'cinema' ? '🍿' : '🛎️'));
+
+  let badgeClass = 'type-product'; let badgeText = '📦 Producto';
+  if (p.type === 'service') { badgeClass = 'type-service'; badgeText = '⚙️ Servicio'; }
+  if (p.type === 'cinema') { badgeClass = 'type-service'; badgeText = '🍿 Cine'; }
 
   document.getElementById('buyModalTitle').textContent = p.name;
-  document.getElementById('buyModalType').className    = `product-type-badge ${p.type === 'service' ? 'type-service' : 'type-product'} mb-2`;
-  document.getElementById('buyModalType').textContent  = p.type === 'service' ? '⚙️ Servicio' : '📦 Producto';
+  document.getElementById('buyModalType').className    = `product-type-badge ${badgeClass} mb-2`;
+  document.getElementById('buyModalType').textContent  = badgeText;
   document.getElementById('buyModalDesc').textContent  = p.description;
   document.getElementById('buyModalPrice').textContent = fmt(p.price);
-  document.getElementById('buyModalStock').textContent = p.type === 'service' ? 'Disponible' : `${p.stock} en stock`;
+  document.getElementById('buyModalStock').textContent = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : `${p.stock} en stock`;
 
   const qtyGroup = document.getElementById('qtyGroup');
   if (p.type === 'service') {
     qtyGroup.style.display = 'none';
     document.getElementById('buyQty').value = 1;
+  } else if (p.type === 'cinema') {
+    qtyGroup.style.display = '';
+    document.getElementById('buyQty').max = 10;
   } else {
     qtyGroup.style.display = '';
     document.getElementById('buyQty').max = p.stock;
@@ -431,11 +445,21 @@ window.confirmPurchase = async () => {
 
     if (data.success) {
       resultEl.style.cssText = 'background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7;padding:12px;border-radius:var(--radius-md);margin-bottom:12px;text-align:center';
-      resultEl.innerHTML = `<div style="font-size:28px;margin-bottom:4px">✅</div><div style="font-weight:700">¡Compra exitosa!</div><div style="font-size:12px;margin-top:4px">Saldo restante: ${fmt(data.newBalance)}</div>`;
+      
+      let successMsg = `<div style="font-size:28px;margin-bottom:4px">✅</div><div style="font-weight:700">¡Compra exitosa!</div>`;
+      if (data.cinemaTicket) {
+        successMsg += `<div style="font-size:14px;margin-top:8px;background:rgba(255,255,255,0.1);padding:8px;border-radius:8px">🎟️ <b>Boleto de ${data.cinemaTicket.provider}:</b> <br><span style="font-family:monospace;font-size:18px;letter-spacing:2px;color:#fff">${data.cinemaTicket.ticketCode}</span></div>`;
+      }
+      if (data.discountMessage) {
+        successMsg += `<div style="font-size:12px;margin-top:4px;color:#34d399">${data.discountMessage}</div>`;
+      }
+      successMsg += `<div style="font-size:12px;margin-top:8px">Saldo restante: ${fmt(data.newBalance)}</div>`;
+      
+      resultEl.innerHTML = successMsg;
       resultEl.classList.remove('hidden');
       loadCatalog();
       loadPurchases();
-      setTimeout(() => closeModal('buyModal'), 2800);
+      setTimeout(() => closeModal('buyModal'), data.cinemaTicket ? 4500 : 2800);
     } else {
       resultEl.style.cssText = 'background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:12px;border-radius:var(--radius-md);margin-bottom:12px;text-align:center';
       resultEl.innerHTML = `<div style="font-size:28px;margin-bottom:4px">❌</div><div>${data.error}</div>`;
@@ -473,7 +497,7 @@ async function loadPurchases() {
     el.innerHTML = rows.map(tx => {
       const prod = productMap[tx.productId];
       const date = tx.timestamp?.toDate ? tx.timestamp.toDate().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-      const imgEl = prod?.imageUrl ? `<img src="${prod.imageUrl}" alt="${tx.productName}"/>` : (tx.productType === 'service' ? '⚙️' : '📦');
+      const imgEl = prod?.imageUrl ? `<img src="${prod.imageUrl}" alt="${tx.productName}"/>` : (tx.productType === 'service' ? '⚙️' : (tx.productType === 'cinema' ? '🍿' : '📦'));
       return `<div class="purchase-item">
         <div class="purchase-thumb">${imgEl}</div>
         <div style="flex:1">

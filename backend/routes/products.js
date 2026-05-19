@@ -22,8 +22,8 @@ router.post('/', verifyToken, async (req, res) => {
   if (!name || !description || price == null || stock == null || !type)
     return res.status(400).json({ success: false, error: 'Faltan campos obligatorios' });
 
-  if (!['product', 'service'].includes(type))
-    return res.status(400).json({ success: false, error: 'Tipo inválido: usa "product" o "service"' });
+  if (!['product', 'service', 'cinema'].includes(type))
+    return res.status(400).json({ success: false, error: 'Tipo inválido: usa "product", "service" o "cinema"' });
 
   const priceNum = Number(price);
   const stockNum = Number(stock);

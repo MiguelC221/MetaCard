@@ -145,6 +145,7 @@
             <div class="type-toggle">
               <button class="type-btn active" id="typeProduct" onclick="setType('product')">📦 Producto</button>
               <button class="type-btn"        id="typeService" onclick="setType('service')">⚙️ Servicio</button>
+              <button class="type-btn"        id="typeCinema"  onclick="setType('cinema')">🍿 Cine</button>
             </div>
           </div>
           <div class="form-group" id="stockGroup">
@@ -288,6 +289,7 @@ window.setType = (type) => {
   selectedType = type;
   document.getElementById('typeProduct').classList.toggle('active', type === 'product');
   document.getElementById('typeService').classList.toggle('active', type === 'service');
+  document.getElementById('typeCinema').classList.toggle('active', type === 'cinema');
   document.getElementById('stockGroup').style.display = type === 'service' ? 'none' : '';
 };
 
@@ -375,8 +377,9 @@ async function loadMyProducts() {
     const stLabel = { pending:'⏳ Pendiente', approved:'✅ Aprobado', rejected:'❌ Rechazado' };
 
     el.innerHTML = data.products.map(p => {
-      const imgEl = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':'📦');
+      const imgEl = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':(p.type==='cinema'?'🍿':'📦'));
       const canDelete = p.status !== 'approved';
+      const typeLabel = p.type==='service'?'⚙️ Servicio':(p.type==='cinema'?'🍿 Cine':'📦 Producto');
       return `<div class="my-product-card">
         <div class="my-product-thumb">${imgEl}</div>
         <div style="flex:1">
@@ -384,7 +387,7 @@ async function loadMyProducts() {
             <div class="font-bold text-sm">${esc(p.name)}</div>
             <span class="badge ${stMap[p.status]||'badge-muted'}" style="font-size:11px">${stLabel[p.status]||p.status}</span>
           </div>
-          <div class="text-xs text-muted mb-1">${p.type==='service'?'⚙️ Servicio':'📦 Producto'} · $${Number(p.price).toLocaleString('es-CO')} · Stock: ${p.type==='service'?'∞':p.stock}</div>
+          <div class="text-xs text-muted mb-1">${typeLabel} · $${Number(p.price).toLocaleString('es-CO')} · Stock: ${p.type==='service'?'∞':p.stock}</div>
           ${p.status==='rejected'&&p.rejectionReason?`<div class="text-xs" style="color:#fca5a5">Motivo: ${esc(p.rejectionReason)}</div>`:''}
         </div>
         ${canDelete?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteProduct('${p.id}')">🗑️</button>`:''}

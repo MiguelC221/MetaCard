@@ -19,6 +19,7 @@ const productsRouter      = require('./routes/products');
 const marketRouter        = require('./routes/market');
 const ticketsRouter       = require('./routes/tickets');
 const conveniosRouter     = require('./routes/convenios');
+const cineRouter          = require('./routes/cine');
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use('/products',      productsRouter);
 app.use('/market',        marketRouter);
 app.use('/tickets',       ticketsRouter);
 app.use('/convenios',     conveniosRouter);
+app.use('/cine',          cineRouter);
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
