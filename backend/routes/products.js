@@ -22,8 +22,8 @@ router.post('/', verifyToken, async (req, res) => {
   if (!name || !description || price == null || stock == null || !type)
     return res.status(400).json({ success: false, error: 'Faltan campos obligatorios' });
 
-  if (!['product', 'service'].includes(type))
-    return res.status(400).json({ success: false, error: 'Tipo inválido: usa "product" o "service"' });
+  if (!['product', 'service', 'cinema'].includes(type))
+    return res.status(400).json({ success: false, error: 'Tipo inválido: usa "product", "service" o "cinema"' });
 
   const priceNum = Number(price);
   const stockNum = Number(stock);
@@ -182,8 +182,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     if (!isOwner && !isAdmin)
       return res.status(403).json({ success: false, error: 'Sin permisos para eliminar este producto' });
 
-    if (data.status === 'approved' && !isAdmin)
-      return res.status(403).json({ success: false, error: 'No puedes eliminar un producto ya aprobado' });
+    // Se eliminó la restricción que impedía al vendedor borrar productos aprobados
 
     await ref.delete();
     return res.json({ success: true });

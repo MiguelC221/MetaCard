@@ -7,6 +7,7 @@ const { isBalanceFrozen }               = require('../services/balanceService');
 const { calculateCashback }             = require('../services/cashbackService');
 const { addTransactionToBatch }         = require('../services/transactionService');
 const { sendNotificationToUser, MESSAGES } = require('../services/fcmService');
+const { logSecurityAlert }              = require('../services/securityService');
 
 const LOW_BALANCE = Number(process.env.LOW_BALANCE_THRESHOLD) || 10000;
 
@@ -30,6 +31,7 @@ router.post('/process', verifyToken, async (req, res) => {
     }
     const card = cardSnap.data();
     if (card.status !== 'active') {
+      await logSecurityAlert({ userId: card.userId, type: 'blocked_card_attempt', description: `Intento de pago de $${amountNum} con tarjeta inactiva (${cardUid})`, metadata: { amount: amountNum, sellerId }, notifyUser: true });
       return res.status(403).json({ success: false, error: 'Tarjeta bloqueada o inactiva' });
     }
 
@@ -40,9 +42,11 @@ router.post('/process', verifyToken, async (req, res) => {
     const buyer = buyerSnap.data();
 
     if (isBalanceFrozen(buyer)) {
+      await logSecurityAlert({ userId: card.userId, type: 'frozen_balance_attempt', description: `Intento de pago de $${amountNum} con saldo congelado`, metadata: { amount: amountNum, sellerId } });
       return res.status(403).json({ success: false, error: 'El saldo del comprador está congelado por inactividad' });
     }
     if ((buyer.balance || 0) < amountNum) {
+      await logSecurityAlert({ userId: card.userId, type: 'insufficient_funds', description: `Intento de pago fallido por saldo insuficiente ($${amountNum})`, metadata: { amount: amountNum, balance: buyer.balance || 0, sellerId } });
       return res.status(402).json({ success: false, error: 'Saldo insuficiente', balance: buyer.balance || 0 });
     }
 
