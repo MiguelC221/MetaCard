@@ -14,7 +14,7 @@ const LOW_BALANCE = Number(process.env.LOW_BALANCE_THRESHOLD) || 10000;
 
 /* ─── POST /purchase — compra en el market con cardId + privateCode ──── */
 router.post('/purchase', verifyToken, async (req, res) => {
-  const { cardId, privateCode, productId, quantity = 1 } = req.body;
+  const { cardId, privateCode, productId, quantity = 1, selectedSeats } = req.body;
 
   if (!cardId || !privateCode || !productId)
     return res.status(400).json({ success: false, error: 'cardId, privateCode y productId son requeridos' });
@@ -74,10 +74,20 @@ router.post('/purchase', verifyToken, async (req, res) => {
     if (product.status !== 'approved')
       return res.status(400).json({ success: false, error: 'El producto no está disponible' });
 
-    /* ── 7. Verificar stock (solo si tiene límite) ────────────────── */
+    /* ── 7. Verificar stock o sillas ──────────────────────────────── */
     if (product.type === 'product') {
       if (product.stock < qty)
         return res.status(400).json({ success: false, error: `Stock insuficiente. Disponible: ${product.stock}` });
+    } else if (product.type === 'cinema') {
+      if (!selectedSeats || selectedSeats.length === 0)
+        return res.status(400).json({ success: false, error: 'Debes seleccionar al menos una silla' });
+      if (selectedSeats.length !== qty)
+        return res.status(400).json({ success: false, error: 'La cantidad de sillas no coincide' });
+      
+      const reserved = product.reservedSeats || [];
+      const overlaps = selectedSeats.filter(s => reserved.includes(s));
+      if (overlaps.length > 0)
+        return res.status(400).json({ success: false, error: `Las sillas ${overlaps.join(', ')} ya están ocupadas` });
     }
 
     let totalAmount = product.price * qty;
@@ -134,6 +144,8 @@ router.post('/purchase', verifyToken, async (req, res) => {
     // Decrementar stock si es producto físico
     if (product.type === 'product') {
       batch.update(productRef, { stock: FieldValue.increment(-qty) });
+    } else if (product.type === 'cinema') {
+      batch.update(productRef, { reservedSeats: FieldValue.arrayUnion(...selectedSeats) });
     }
 
     // Crear transacción
@@ -162,7 +174,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
     let cinemaTicket = null;
     if (product.type === 'cinema') {
       const provider = product.cinemaProvider || 'Cine Colombia';
-      cinemaTicket = await issueCinemaTicket(req.uid, provider, product.name, qty).catch(e => {
+      cinemaTicket = await issueCinemaTicket(req.uid, provider, product.name, qty, selectedSeats).catch(e => {
         console.error('[CineService] Error emitiendo boleto:', e);
         return null;
       });

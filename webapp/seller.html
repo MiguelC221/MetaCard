@@ -378,7 +378,7 @@ async function loadMyProducts() {
 
     el.innerHTML = data.products.map(p => {
       const imgEl = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':(p.type==='cinema'?'🍿':'📦'));
-      const canDelete = p.status !== 'approved';
+      const canDelete = true; // Ahora el vendedor puede borrar cualquier producto
       const typeLabel = p.type==='service'?'⚙️ Servicio':(p.type==='cinema'?'🍿 Cine':'📦 Producto');
       return `<div class="my-product-card">
         <div class="my-product-thumb">${imgEl}</div>

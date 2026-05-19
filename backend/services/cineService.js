@@ -16,9 +16,10 @@ const CINEMA_PROVIDERS = ['Cinemark', 'Cine Colombia', 'Royal Films'];
  * @param {string} providerName - Nombre del cine (Ej: 'Cine Colombia')
  * @param {string} movieTitle - Título de la película
  * @param {number} quantity - Cantidad de boletas
+ * @param {Array} seats - Asientos seleccionados
  * @returns {Promise<Object>} Resultado con el código de reserva
  */
-async function issueCinemaTicket(userId, providerName, movieTitle, quantity) {
+async function issueCinemaTicket(userId, providerName, movieTitle, quantity, seats = []) {
   if (!CINEMA_PROVIDERS.includes(providerName)) {
     throw new Error(`Proveedor de cine no soportado: ${providerName}`);
   }
@@ -43,6 +44,7 @@ async function issueCinemaTicket(userId, providerName, movieTitle, quantity) {
     provider: providerName,
     movie: movieTitle,
     quantity,
+    seats,
     ticketCode,
     qrData,
     status: 'confirmed',
@@ -50,10 +52,11 @@ async function issueCinemaTicket(userId, providerName, movieTitle, quantity) {
   });
 
   // 2. Notificar al usuario que sus boletas están listas
+  const seatsMsg = seats.length > 0 ? ` Sillas: ${seats.join(', ')}.` : '';
   await sendNotificationToUser(
     userId,
     `🍿 Boletos de ${providerName} listos`,
-    `Tu código para "${movieTitle}" es ${ticketCode}. ¡Disfruta la función!`,
+    `Tu código para "${movieTitle}" es ${ticketCode}.${seatsMsg} ¡Disfruta la función!`,
     { type: 'cinema_ticket', ticketCode }
   ).catch(err => console.error('[CineService] Error enviando push:', err));
 
@@ -64,6 +67,7 @@ async function issueCinemaTicket(userId, providerName, movieTitle, quantity) {
     ticketCode,
     qrData,
     quantity,
+    seats,
     message: `Boletos emitidos correctamente por ${providerName}`,
   };
 }

@@ -450,4 +450,71 @@ tbody td { padding: 12px 16px; color: var(--text-secondary); }
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }
 .font-bold { font-weight: 700; }
-.separator { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CINEMA SEATS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cinema-seat-map {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  justify-content: center;
+  margin: 16px auto 24px;
+  padding: 16px;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  max-width: 360px;
+}
+.cinema-screen {
+  grid-column: 1 / -1;
+  height: 24px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  border-top-left-radius: 50%;
+  border-top-right-radius: 50%;
+  margin-bottom: 24px;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+}
+.cinema-screen::after {
+  content: "PANTALLA";
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.seat {
+  aspect-ratio: 1;
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 6px 6px 4px 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.seat:hover:not(.taken) {
+  background: rgba(99,102,241,0.3);
+  transform: translateY(-2px);
+}
+.seat.selected {
+  background: var(--success);
+  border-color: #059669;
+  color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(16,185,129,0.4);
+}
+.seat.taken {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.2);
+  color: rgba(239,68,68,0.5);
+  cursor: not-allowed;
+}.separator { height: 1px; background: var(--border); margin: 20px 0; }

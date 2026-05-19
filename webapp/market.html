@@ -163,6 +163,12 @@
 
     <div class="separator"></div>
 
+    <!-- Mapa de sillas (Oculto por defecto, se muestra si es cine) -->
+    <div id="cinemaMapContainer" class="hidden">
+      <p class="text-sm text-center mb-2 font-bold" style="color:var(--primary-light)">Selecciona tus sillas</p>
+      <div id="cinemaSeatMap" class="cinema-seat-map"></div>
+    </div>
+
     <!-- Formulario de compra -->
     <div id="buyForm">
       <p class="text-sm text-secondary mb-4">Para confirmar la compra ingresa el <strong>ID de tu tarjeta</strong> y tu <strong>Código Privado (PIN)</strong>.</p>
@@ -397,21 +403,70 @@ window.openBuyModal = (productId) => {
   document.getElementById('buyModalStock').textContent = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : `${p.stock} en stock`;
 
   const qtyGroup = document.getElementById('qtyGroup');
+  const cinemaMapContainer = document.getElementById('cinemaMapContainer');
+  const cinemaSeatMap = document.getElementById('cinemaSeatMap');
+  
+  window.selectedCinemaSeats = []; // Reiniciar sillas seleccionadas
+  
   if (p.type === 'service') {
     qtyGroup.style.display = 'none';
+    cinemaMapContainer.classList.add('hidden');
     document.getElementById('buyQty').value = 1;
+    document.getElementById('buyQty').readOnly = false;
   } else if (p.type === 'cinema') {
     qtyGroup.style.display = '';
-    document.getElementById('buyQty').max = 10;
+    cinemaMapContainer.classList.remove('hidden');
+    document.getElementById('buyQty').value = 0;
+    document.getElementById('buyQty').readOnly = true; // Bloqueado, depende de las sillas
+    
+    // Generar sala de cine simulada
+    const rows = ['A', 'B', 'C', 'D'];
+    const cols = 8;
+    const reserved = p.reservedSeats || ['C3', 'C4', 'B5']; // Demo: o tomarlas del backend
+    
+    let html = '<div class="cinema-screen"></div>';
+    for (let r of rows) {
+      for (let c = 1; c <= cols; c++) {
+        const seatId = `${r}${c}`;
+        const isTaken = reserved.includes(seatId);
+        html += `<div class="seat ${isTaken ? 'taken' : ''}" data-seat="${seatId}" ${isTaken ? '' : `onclick="toggleSeat('${seatId}')"`}>${seatId}</div>`;
+      }
+    }
+    cinemaSeatMap.innerHTML = html;
   } else {
     qtyGroup.style.display = '';
+    cinemaMapContainer.classList.add('hidden');
+    document.getElementById('buyQty').value = 1;
     document.getElementById('buyQty').max = p.stock;
+    document.getElementById('buyQty').readOnly = false;
   }
 
   document.getElementById('buyCardId').value = '';
   document.getElementById('buyPin').value    = '';
   document.getElementById('buyResult').classList.add('hidden');
   document.getElementById('buyModal').classList.remove('hidden');
+};
+
+window.toggleSeat = (seatId) => {
+  const seatEl = document.querySelector(`.seat[data-seat="${seatId}"]`);
+  if (!seatEl || seatEl.classList.contains('taken')) return;
+  
+  const idx = window.selectedCinemaSeats.indexOf(seatId);
+  if (idx > -1) {
+    window.selectedCinemaSeats.splice(idx, 1);
+    seatEl.classList.remove('selected');
+  } else {
+    // Máximo 10 asientos
+    if (window.selectedCinemaSeats.length >= 10) {
+      showToast('Máximo 10 boletos por compra', 'warning');
+      return;
+    }
+    window.selectedCinemaSeats.push(seatId);
+    seatEl.classList.add('selected');
+  }
+  
+  // Actualizar la cantidad del input según sillas seleccionadas
+  document.getElementById('buyQty').value = window.selectedCinemaSeats.length;
 };
 
 window.togglePin = () => {
@@ -439,7 +494,13 @@ window.confirmPurchase = async () => {
     const res = await fetch(`${BACKEND_URL}/market/purchase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ cardId, privateCode, productId: selectedProductId, quantity }),
+      body: JSON.stringify({ 
+        cardId, 
+        privateCode, 
+        productId: selectedProductId, 
+        quantity,
+        selectedSeats: window.selectedCinemaSeats || []
+      }),
     });
     const data = await res.json();
 
@@ -449,6 +510,9 @@ window.confirmPurchase = async () => {
       let successMsg = `<div style="font-size:28px;margin-bottom:4px">✅</div><div style="font-weight:700">¡Compra exitosa!</div>`;
       if (data.cinemaTicket) {
         successMsg += `<div style="font-size:14px;margin-top:8px;background:rgba(255,255,255,0.1);padding:8px;border-radius:8px">🎟️ <b>Boleto de ${data.cinemaTicket.provider}:</b> <br><span style="font-family:monospace;font-size:18px;letter-spacing:2px;color:#fff">${data.cinemaTicket.ticketCode}</span></div>`;
+        if (data.cinemaTicket.seats && data.cinemaTicket.seats.length > 0) {
+          successMsg += `<div style="font-size:13px;margin-top:6px;color:#a5b4fc">💺 Sillas: <b>${data.cinemaTicket.seats.join(', ')}</b></div>`;
+        }
       }
       if (data.discountMessage) {
         successMsg += `<div style="font-size:12px;margin-top:4px;color:#34d399">${data.discountMessage}</div>`;

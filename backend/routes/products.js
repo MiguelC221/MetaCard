@@ -182,8 +182,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     if (!isOwner && !isAdmin)
       return res.status(403).json({ success: false, error: 'Sin permisos para eliminar este producto' });
 
-    if (data.status === 'approved' && !isAdmin)
-      return res.status(403).json({ success: false, error: 'No puedes eliminar un producto ya aprobado' });
+    // Se eliminó la restricción que impedía al vendedor borrar productos aprobados
 
     await ref.delete();
     return res.json({ success: true });
