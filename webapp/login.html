@@ -8,10 +8,69 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/styles.css" />
+
+  <style>
+    /* Forzamos que la tarjeta contenga el overlay y respete sus bordes redondeados */
+    .auth-card.glass {
+      position: relative !important;
+      overflow: hidden !important;
+    }
+
+    .session-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(19, 118, 85, 0.96); /* Verde esmeralda */
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50; /* Por encima de los inputs y botones de la card */
+      color: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    
+    .session-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .overlay-content {
+      text-align: center;
+      padding: 1.5rem;
+    }
+    
+    .overlay-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+    
+    .overlay-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 255, 255, 0.25);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body class="auth-page">
 
-  <!-- Fondo animado -->
   <div class="bg-orbs">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -19,7 +78,6 @@
   </div>
 
   <div class="auth-container">
-    <!-- Logo -->
     <div class="auth-logo">
       <div class="logo-icon">
         <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -34,15 +92,20 @@
       <span class="logo-text">MetaCard</span>
     </div>
 
-    <!-- Card -->
     <div class="auth-card glass">
-      <!-- Tabs -->
+      
+      <div id="sessionOverlay" class="session-overlay">
+        <div class="overlay-content">
+          <div class="overlay-title">Iniciando sesión</div>
+          <div class="overlay-spinner"></div>
+        </div>
+      </div>
+
       <div class="auth-tabs">
         <button class="tab-btn active" id="tabLogin"    onclick="switchTab('login')">Iniciar sesión</button>
         <button class="tab-btn"        id="tabRegister" onclick="switchTab('register')">Crear cuenta</button>
       </div>
 
-      <!-- LOGIN -->
       <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label for="loginEmail">Correo institucional</label>
@@ -62,7 +125,6 @@
         </button>
       </form>
 
-      <!-- REGISTRO -->
       <form id="registerForm" class="auth-form hidden" onsubmit="handleRegister(event)">
         <div class="form-row">
           <div class="form-group">
@@ -103,7 +165,6 @@
     </p>
   </div>
 
-  <!-- Firebase SDK v9 compat (UMD) — no requiere bundler ni top-level await -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -126,10 +187,28 @@
     // ── Redirigir si ya tiene sesión ─────────────────────────────────────────
     auth.onAuthStateChanged(async user => {
       if (!user) return;
+
+      // 1. Mostrar el overlay verde únicamente dentro de la tarjeta
+      const overlay = document.getElementById('sessionOverlay');
+      overlay.classList.add('active');
+
       try {
+        // 2. Traer el rol del usuario en segundo plano
         const snap = await db.collection('users').doc(user.uid).get();
-        if (snap.exists) redirectByRole(snap.data().role);
-      } catch(e) { console.warn('onAuthState error', e); }
+        
+        if (snap.exists) {
+          // Pequeño delay de 800ms para una transición visual suave
+          setTimeout(() => {
+            redirectByRole(snap.data().role);
+          }, 800);
+        } else {
+          setTimeout(() => { redirectByRole('buyer'); }, 800);
+        }
+      } catch(e) { 
+        console.warn('onAuthState error', e);
+        // Si hay un error de red o base de datos, quitamos el bloqueo para permitir control manual
+        overlay.classList.remove('active');
+      }
     });
 
     function redirectByRole(role) {
@@ -208,10 +287,7 @@
       const referral = document.getElementById('regReferral').value.trim();
 
       try {
-        // 1. Crear usuario en Firebase Auth
         const cred = await auth.createUserWithEmailAndPassword(email, password);
-
-        // 2. Registrar en el backend (crea el doc en Firestore usando Admin SDK)
         const token = await cred.user.getIdToken();
         const res = await fetch(`${window.location.origin}/users/register`, {
           method: 'POST',
@@ -233,7 +309,6 @@
           throw new Error(data.error || 'Error al guardar en base de datos');
         }
 
-        // 3. Redirigir al dashboard
         window.location.href = 'buyer.html';
 
       } catch (err) {

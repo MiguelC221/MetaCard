@@ -8,6 +8,210 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="assets/css/styles.css"/>
+  <style>
+    /* User menu dropdown styles */
+    .topbar-user-menu {
+      position: relative;
+    }
+
+    .topbar-user {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .topbar-user:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .topbar-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .topbar-user-arrow {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .topbar-user:hover .topbar-user-arrow {
+      transform: translateY(2px);
+    }
+
+    .user-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      min-width: 180px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      z-index: 200;
+    }
+
+    .user-menu.hidden {
+      display: none;
+    }
+
+    .user-menu-item {
+      width: 100%;
+      padding: 12px 14px;
+      border: none;
+      background: none;
+      color: var(--text-primary);
+      text-align: left;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .user-menu-item:hover {
+      background: rgba(99, 102, 241, 0.12);
+    }
+
+    .user-menu-item + .user-menu-item {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 768px) {
+      .user-menu {
+        min-width: 160px;
+      }
+
+      .topbar-user {
+        padding: 6px 10px;
+      }
+
+      .topbar-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────── */
+    /* RESPONSIVE NAVIGATION                                           */
+    /* ─────────────────────────────────────────────────────────────── */
+    .hamburger-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+    }
+
+    .mobile-menu-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 98;
+      top: 60px;
+    }
+
+    .mobile-menu-overlay.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hamburger-btn {
+        display: flex;
+      }
+
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 60px;
+        width: 100%;
+        max-width: 280px;
+        height: calc(100vh - 60px);
+        z-index: 99;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        border-right: 1px solid var(--border);
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        padding: 20px;
+      }
+
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 484px) {
+      .hamburger-btn {
+        display: flex;
+        margin-right: 8px;
+      }
+
+      .topbar-logo {
+        gap: 8px;
+      }
+
+      .topbar-logo span {
+        font-size: 16px;
+      }
+
+      .topbar-user {
+        padding: 4px 8px;
+        gap: 6px;
+      }
+
+      .topbar-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+      }
+
+      .topbar-user-arrow {
+        display: none;
+      }
+
+      .user-menu {
+        right: -10px;
+        min-width: 150px;
+      }
+
+      .main-content {
+        padding: 16px;
+      }
+    }
+  </style>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -16,18 +220,39 @@
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-logo">
-      <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open')">☰</button>
+      <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"/>
+        </svg>
+      </button>
       <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#tg)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
       <span>MetaCard</span>
     </div>
     <div class="topbar-right">
-      <span id="topbarName" class="text-secondary text-sm"></span>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+      <div class="topbar-user-menu">
+        <button class="topbar-user" onclick="toggleUserMenu(event)">
+          <div class="topbar-avatar" id="userAvatar">👤</div>
+          <span id="topbarName" class="text-secondary text-sm"></span>
+          <span class="topbar-user-arrow">▼</span>
+        </button>
+        <div class="user-menu hidden" id="userMenuDropdown">
+          <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08)">
+            <div id="menuUserName" style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">—</div>
+            <div id="menuUserEmail" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;margin-top:2px">—</div>
+          </div>
+          <button class="user-menu-item" onclick="goToAccount()">👤 Mi Cuenta</button>
+          <button class="user-menu-item" onclick="goToMarket()">🛒 WebMarket</button>
+          <button class="user-menu-item" onclick="logout()">🚪 Salir</button>
+        </div>
+      </div>
     </div>
   </header>
 
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-section-label">Principal</div>
     <button class="sidebar-item active" id="nav-dashboard" onclick="showSection('dashboard')"><span class="icon">🏠</span> Dashboard</button>
     <button class="sidebar-item" id="nav-recharge"  onclick="showSection('recharge')"><span class="icon">💳</span> Recargar saldo</button>
@@ -35,6 +260,7 @@
     <div class="sidebar-section-label">Compras</div>
     <button class="sidebar-item" id="nav-market"    onclick="window.location.href='market.html'"><span class="icon">🛒</span> WebMarket</button>
     <div class="sidebar-section-label">Cuenta</div>
+    <button class="sidebar-item" id="nav-account"   onclick="window.location.href='account.html'"><span class="icon">👤</span> Mi Cuenta</button>
     <button class="sidebar-item" id="nav-card"      onclick="showSection('card')"><span class="icon">📡</span> Mi tarjeta NFC</button>
     <button class="sidebar-item" id="nav-benefits"  onclick="showSection('benefits')"><span class="icon">⭐</span> Beneficios</button>
     <button class="sidebar-item" id="nav-referrals" onclick="showSection('referrals')"><span class="icon">🤝</span> Referidos</button>
@@ -235,6 +461,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
+
+
 const firebaseConfig = {
   apiKey:            "AIzaSyB5IzAXms4cbjOst4ER9FufMgWCj00NnDA",
   authDomain:        "metacard-2026f.firebaseapp.com",
@@ -250,6 +478,8 @@ const BACKEND_URL = window.location.origin;
 
 let currentUser = null;
 let userData    = null;
+
+
 
 // ── Auth guard ──────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
@@ -270,9 +500,20 @@ auth.onAuthStateChanged(async user => {
   showSection(saved);
 });
 
+
 function renderDashboard() {
-  document.getElementById('topbarName').textContent = userData.name;
-  document.getElementById('userName').textContent   = userData.name.split(' ')[0];
+  const displayName = userData.name || currentUser.displayName || '';
+  const displayEmail = userData.email || currentUser.email || '';
+  // Topbar: show first name (or email prefix if no name)
+  const shortName = displayName ? displayName.split(' ')[0] : displayEmail.split('@')[0];
+  document.getElementById('topbarName').textContent = shortName;
+  // Avatar: first letter of name or email
+  const initial = (displayName || displayEmail).charAt(0).toUpperCase();
+  document.getElementById('userAvatar').textContent = initial || '👤';
+  // Dropdown header
+  document.getElementById('menuUserName').textContent  = displayName || shortName;
+  document.getElementById('menuUserEmail').textContent = displayEmail;
+  document.getElementById('userName').textContent   = shortName;
   document.getElementById('balanceDisplay').textContent    = fmt(userData.balance || 0);
   document.getElementById('totalRechargedDisplay').textContent = fmt(userData.totalRecharged || 0);
   document.getElementById('referralCode').textContent     = userData.referralCode || '—';
@@ -391,6 +632,50 @@ function renderBenefits(level) {
     </div>`;
   }).join('');
 }
+
+// ── User Menu Dropdown ───────────────────────────────────────────────────────
+window.toggleUserMenu = (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('userMenuDropdown');
+  menu.classList.toggle('hidden');
+};
+
+window.goToAccount = () => {
+  window.location.href = 'account.html';
+};
+
+window.goToMarket = () => {
+  window.location.href = 'market.html';
+};
+
+// Close menu when clicking outside
+document.addEventListener('click', () => {
+  const menu = document.getElementById('userMenuDropdown');
+  if (menu && !menu.classList.contains('hidden')) {
+    menu.classList.add('hidden');
+  }
+});
+
+// ── Mobile Menu Toggle ───────────────────────────────────────────────────────
+window.toggleMobileMenu = () => {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobileMenuOverlay');
+  sidebar.classList.toggle('active');
+  overlay.classList.toggle('active');
+};
+
+// Close mobile menu when clicking on a sidebar item
+document.addEventListener('DOMContentLoaded', () => {
+  const sidebarItems = document.querySelectorAll('.sidebar-item');
+  sidebarItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileMenuOverlay');
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    });
+  });
+});
 
 // ── Acciones ─────────────────────────────────────────────────────────────────
 window.submitRecharge = async (e) => {

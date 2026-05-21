@@ -210,7 +210,7 @@
 
 <!-- ── Modal detalle / compra ────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="buyModal">
-  <div class="modal" style="max-width:480px; max-height:95%; overflow-y: scroll;">
+  <div class="modal" style="max-width:480px; max-height:98%; overflow-y: scroll;">
     <div class="modal-header">
       <span class="modal-title" id="buyModalTitle">Comprar producto</span>
       <button class="modal-close" onclick="closeModal('buyModal')">✕</button>
@@ -296,6 +296,9 @@
     <div class="sidebar-section-label">Market</div>
     <button class="sidebar-item active" id="nav-catalog"   onclick="showSection('catalog')"><span class="icon">🛍️</span> Catálogo</button>
     <button class="sidebar-item"        id="nav-purchases" onclick="showSection('purchases')"><span class="icon">📋</span> Mis compras</button>
+    <div class="sidebar-footer">
+      <button class="btn btn-secondary btn-full" id="balanceButton" onclick="goToAccount()">Saldo: 0</button>
+    </div>
   </aside>
 
   <main class="main-content">
@@ -362,12 +365,14 @@
 import { auth, db, BACKEND_URL }                      from './assets/js/firebase-config.js';
 import { onAuthStateChanged, signOut }                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { collection, query, where, orderBy,
-         limit, getDocs }                              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         limit, getDocs, getDoc, doc }                  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-let currentUser   = null;
-let allProducts   = [];
-let activeFilter  = 'all';
+let currentUser       = null;
+let currentUserBalance = 0;
+let allProducts       = [];
+let activeFilter      = 'all';
 let selectedProductId = null;
+let authReady         = false;
 let authReady     = false;
 let userCardId    = null;  // Card ID auto-filled for logged-in users
 
@@ -384,6 +389,18 @@ onAuthStateChanged(auth, async user => {
   const right = document.getElementById('topbarRight');
   if (user) {
     right.innerHTML = `
+      <div class="topbar-user-menu">
+        <button class="topbar-user" onclick="toggleUserMenu(event)">
+          <span class="topbar-avatar">👤</span>
+          <span class="text-secondary text-sm">${user.displayName || user.email}</span>
+          <span class="topbar-user-arrow">▾</span>
+        </button>
+        <div class="user-menu hidden" id="userMenu">
+          <button class="user-menu-item" onclick="window.location.href='buyer.html'">Mi cuenta</button>
+          <button class="user-menu-item" onclick="logout()">Cerrar sesión</button>
+        </div>
+      </div>`;
+    loadAccountInfo(user.uid);
       <span class="text-secondary text-sm">${user.displayName || user.email}</span>
       <a href="buyer.html" class="btn btn-ghost btn-sm">← Mi cuenta</a>
       <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>`;
@@ -683,6 +700,10 @@ window.confirmPurchase = async () => {
       
       resultEl.innerHTML = successMsg;
       resultEl.classList.remove('hidden');
+      if (data.newBalance != null) {
+        currentUserBalance = data.newBalance;
+        updateBalanceButton();
+      }
       loadCatalog();
       loadPurchases();
       setTimeout(() => closeModal('buyModal'), data.cinemaTicket ? 4500 : 2800);
@@ -786,6 +807,13 @@ window.showSection = (name) => {
 };
 
 window.closeModal  = (id) => document.getElementById(id).classList.add('hidden');
+window.toggleUserMenu = (event) => {
+  event.stopPropagation();
+  document.getElementById('userMenu')?.classList.toggle('hidden');
+};
+window.closeUserMenu = () => document.getElementById('userMenu')?.classList.add('hidden');
+document.addEventListener('click', () => window.closeUserMenu());
+window.goToAccount = () => window.location.href = 'buyer.html';
 window.logout      = () => signOut(auth).then(() => window.location.href = 'login.html');
 window.showToast   = (msg, type='info') => {
   const t = document.createElement('div');
@@ -793,6 +821,24 @@ window.showToast   = (msg, type='info') => {
   document.getElementById('toast-container').appendChild(t);
   setTimeout(() => t.remove(), 4000);
 };
+function updateBalanceButton() {
+  const btn = document.getElementById('balanceButton');
+  if (!btn) return;
+  btn.textContent = `Saldo: ${Number(currentUserBalance||0).toLocaleString('es-CO')}`;
+}
+
+async function loadAccountInfo(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (snap.exists()) {
+      currentUserBalance = snap.data().balance || 0;
+      updateBalanceButton();
+    }
+  } catch (err) {
+    console.warn('[loadAccountInfo]', err);
+  }
+}
+
 function fmt(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function setLoading(btn, v) {
