@@ -115,6 +115,74 @@
       background:none; border:none; cursor:pointer; color:var(--text-secondary); font-size:18px;
     }
 
+    /* ── Thursday 2x1 Banner ─────────────────────────────────────────── */
+    .thursday-banner {
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #ec4899 100%);
+      border-radius: var(--radius-lg);
+      padding: 20px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      animation: thursdayPulse 3s ease-in-out infinite;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(245,158,11,0.3);
+    }
+    .thursday-banner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: thursdayShine 3s ease-in-out infinite;
+    }
+    @keyframes thursdayPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.01); }
+    }
+    @keyframes thursdayShine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .thursday-banner .banner-icon { font-size: 42px; flex-shrink: 0; position: relative; }
+    .thursday-banner .banner-text { position: relative; }
+    .thursday-banner .banner-text h3 { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .thursday-banner .banner-text p  { font-size: 13px; color: rgba(255,255,255,0.85); }
+    .badge-2x1 {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #fff;
+      animation: badge2x1Pulse 2s ease-in-out infinite;
+      box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+    }
+    @keyframes badge2x1Pulse {
+      0%, 100% { box-shadow: 0 2px 8px rgba(245,158,11,0.4); }
+      50% { box-shadow: 0 4px 16px rgba(245,158,11,0.7); }
+    }
+    .price-original {
+      text-decoration: line-through;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      margin-right: 6px;
+    }
+    .price-promo {
+      color: #fbbf24;
+      font-weight: 800;
+    }
+    /* ── Card ID hidden notice ────────────────────────────────────────── */
+    .card-autofilled {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #6ee7b7;
+    }
+    .card-autofilled .autofill-icon { font-size: 18px; }
+
     /* ── Historial ───────────────────────────────────────────────────── */
     .purchase-item {
       display:flex; align-items:center; gap:12px;
@@ -163,6 +231,13 @@
 
     <div class="separator"></div>
 
+    <!-- Thursday 2x1 promo notice (shown only for cinema on Thursday) -->
+    <div id="buyModal2x1Notice" class="hidden" style="margin-bottom:12px;padding:12px 16px;border-radius:var(--radius-md);background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(239,68,68,0.1));border:1px solid rgba(245,158,11,0.35);text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">🎉🍿</div>
+      <div style="font-size:14px;font-weight:700;color:#fbbf24">¡Hoy es Jueves — 2×1 en Cine!</div>
+      <div class="text-xs text-secondary" style="margin-top:4px">Solo pagas la mitad de las boletas. La promoción se aplica automáticamente.</div>
+    </div>
+
     <!-- Mapa de sillas (Oculto por defecto, se muestra si es cine) -->
     <div id="cinemaMapContainer" class="hidden">
       <p class="text-sm text-center mb-2 font-bold" style="color:var(--primary-light)">Selecciona tus sillas</p>
@@ -171,8 +246,17 @@
 
     <!-- Formulario de compra -->
     <div id="buyForm">
-      <p class="text-sm text-secondary mb-4">Para confirmar la compra ingresa el <strong>ID de tu tarjeta</strong> y tu <strong>Código Privado (PIN)</strong>.</p>
-      <div class="form-group mb-3">
+      <!-- Notice when card is auto-filled -->
+      <div id="cardAutofilledNotice" class="card-autofilled hidden">
+        <span class="autofill-icon">✅</span>
+        <div>
+          <div style="font-weight:600">Tarjeta detectada automáticamente</div>
+          <div class="text-xs" style="color:rgba(110,231,183,0.7);margin-top:2px" id="cardAutofilledId">ID: ...</div>
+        </div>
+      </div>
+
+      <p class="text-sm text-secondary mb-4" id="buyFormInstructions">Para confirmar la compra ingresa el <strong>ID de tu tarjeta</strong> y tu <strong>Código Privado (PIN)</strong>.</p>
+      <div class="form-group mb-3" id="cardIdGroup">
         <label for="buyCardId">ID de tarjeta (Card ID)</label>
         <input type="text" id="buyCardId" placeholder="Ej: A1B2C3D4" style="font-family:monospace;text-transform:uppercase"/>
       </div>
@@ -199,7 +283,8 @@
 <div class="app-layout">
   <header class="topbar">
     <div class="topbar-logo">
-      <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#mg)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="mg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
+      <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open')">☰</button>
+      <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#tg)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
       <span>MetaCard Market</span>
     </div>
     <div class="topbar-right" id="topbarRight">
@@ -220,6 +305,15 @@
 
     <!-- ── CATÁLOGO ── -->
     <section id="section-catalog">
+      <!-- Thursday 2x1 Banner (shown only on Thursdays) -->
+      <div id="thursdayBanner" class="thursday-banner hidden">
+        <div class="banner-icon">🍿🎬</div>
+        <div class="banner-text">
+          <h3>¡Hoy es Jueves de Cine 2×1!</h3>
+          <p>Compra tus boletas de cine y solo pagas la mitad. La promoción se aplica automáticamente al comprar.</p>
+        </div>
+      </div>
+
       <!-- Hero -->
       <div class="market-hero">
         <h1>🛒 WebMarket MetaCard</h1>
@@ -279,6 +373,13 @@ let allProducts       = [];
 let activeFilter      = 'all';
 let selectedProductId = null;
 let authReady         = false;
+let authReady     = false;
+let userCardId    = null;  // Card ID auto-filled for logged-in users
+
+// ── Detect if today is Thursday (2x1 cinema day) ─────────────────────
+function isThursday() {
+  return new Date().getDay() === 4; // 0=Sun, 4=Thu
+}
 
 // ── Auth: no obligatorio — pero detectamos si hay sesión ──────────────
 onAuthStateChanged(auth, async user => {
@@ -300,9 +401,29 @@ onAuthStateChanged(auth, async user => {
         </div>
       </div>`;
     loadAccountInfo(user.uid);
+      <span class="text-secondary text-sm">${user.displayName || user.email}</span>
+      <a href="buyer.html" class="btn btn-ghost btn-sm">← Mi cuenta</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>`;
+
+    // Auto-detect card ID from Firestore
+    try {
+      const cardsSnap = await getDocs(
+        query(collection(db, 'cards'), where('userId', '==', user.uid), limit(1))
+      );
+      if (!cardsSnap.empty) {
+        userCardId = cardsSnap.docs[0].id;
+      }
+    } catch (e) {
+      console.warn('[Market] Could not auto-detect card ID:', e);
+    }
   } else {
     right.innerHTML = `
       <a href="login.html" class="btn btn-primary btn-sm">🔑 Iniciar sesión</a>`;
+  }
+
+  // Show Thursday banner if applicable
+  if (isThursday()) {
+    document.getElementById('thursdayBanner').classList.remove('hidden');
   }
 
   // Cargar catálogo siempre (es público)
@@ -345,6 +466,8 @@ function renderProducts() {
     return;
   }
 
+  const thursday = isThursday();
+
   document.getElementById('productsGrid').innerHTML = filtered.map(p => {
     const stockLabel = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : (p.stock > 0 ? `${p.stock} en stock` : '⚠️ Sin stock');
     const outOfStock = p.type === 'product' && p.stock <= 0;
@@ -356,18 +479,28 @@ function renderProducts() {
     let badgeText = '📦 Producto';
     if (p.type === 'service') { badgeClass = 'type-service'; badgeText = '⚙️ Servicio'; }
     if (p.type === 'cinema') { badgeClass = 'type-service'; badgeText = '🍿 Cine'; }
+
+    // Thursday 2x1 badge for cinema
+    const is2x1 = thursday && p.type === 'cinema';
+    const promoBadge = is2x1 ? '<span class="badge-2x1" style="margin-left:6px">🎉 2×1 HOY</span>' : '';
+    const priceHtml = is2x1
+      ? `<span class="price-original">${fmt(p.price)}</span><span class="product-price price-promo">${fmt(Math.ceil(p.price / 2))}/boleta</span>`
+      : `<div class="product-price">${fmt(p.price)}</div>`;
       
     return `<div class="product-card" onclick="openBuyModal('${p.id}')">
       <div class="product-img">${imgEl}</div>
       <div class="product-body">
-        <div class="product-type-badge ${badgeClass}">
-          ${badgeText}
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+          <div class="product-type-badge ${badgeClass}">
+            ${badgeText}
+          </div>
+          ${promoBadge}
         </div>
         <div class="product-name">${esc(p.name)}</div>
         <div class="product-desc">${esc(p.description)}</div>
         <div class="product-footer">
           <div>
-            <div class="product-price">${fmt(p.price)}</div>
+            ${priceHtml}
             <div class="product-stock">${stockLabel} · por ${esc(p.sellerName||'Vendedor')}</div>
           </div>
           <button class="btn-buy" ${outOfStock ? 'disabled' : ''} onclick="event.stopPropagation();openBuyModal('${p.id}')">
@@ -412,8 +545,18 @@ window.openBuyModal = (productId) => {
   document.getElementById('buyModalType').className    = `product-type-badge ${badgeClass} mb-2`;
   document.getElementById('buyModalType').textContent  = badgeText;
   document.getElementById('buyModalDesc').textContent  = p.description;
-  document.getElementById('buyModalPrice').textContent = fmt(p.price);
   document.getElementById('buyModalStock').textContent = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : `${p.stock} en stock`;
+
+  // Thursday 2x1 promo for cinema in modal
+  const is2x1 = isThursday() && p.type === 'cinema';
+  const modal2x1 = document.getElementById('buyModal2x1Notice');
+  if (is2x1) {
+    modal2x1.classList.remove('hidden');
+    document.getElementById('buyModalPrice').innerHTML = `<span class="price-original">${fmt(p.price)}</span> <span class="price-promo">${fmt(Math.ceil(p.price / 2))}/boleta</span>`;
+  } else {
+    modal2x1.classList.add('hidden');
+    document.getElementById('buyModalPrice').textContent = fmt(p.price);
+  }
 
   const qtyGroup = document.getElementById('qtyGroup');
   const cinemaMapContainer = document.getElementById('cinemaMapContainer');
@@ -454,7 +597,26 @@ window.openBuyModal = (productId) => {
     document.getElementById('buyQty').readOnly = false;
   }
 
-  document.getElementById('buyCardId').value = '';
+  // ── Auto-fill card ID if user is logged in and has a card ───────────
+  const cardIdGroup = document.getElementById('cardIdGroup');
+  const cardAutoNotice = document.getElementById('cardAutofilledNotice');
+  const instructions = document.getElementById('buyFormInstructions');
+
+  if (userCardId) {
+    // Card auto-detected: hide the card ID input, show notice
+    document.getElementById('buyCardId').value = userCardId;
+    cardIdGroup.classList.add('hidden');
+    cardAutoNotice.classList.remove('hidden');
+    document.getElementById('cardAutofilledId').textContent = `ID: ${userCardId}`;
+    instructions.innerHTML = 'Tu tarjeta fue detectada automáticamente. Solo ingresa tu <strong>Código Privado (PIN)</strong> para confirmar.';
+  } else {
+    // No card found: show card ID input as usual
+    document.getElementById('buyCardId').value = '';
+    cardIdGroup.classList.remove('hidden');
+    cardAutoNotice.classList.add('hidden');
+    instructions.innerHTML = 'Para confirmar la compra ingresa el <strong>ID de tu tarjeta</strong> y tu <strong>Código Privado (PIN)</strong>.';
+  }
+
   document.getElementById('buyPin').value    = '';
   document.getElementById('buyResult').classList.add('hidden');
   document.getElementById('buyModal').classList.remove('hidden');
@@ -496,7 +658,10 @@ window.confirmPurchase = async () => {
   const btn         = document.getElementById('buyConfirmBtn');
   const resultEl    = document.getElementById('buyResult');
 
-  if (!cardId || !privateCode) { showToast('Ingresa el ID de tarjeta y el PIN', 'warning'); return; }
+  if (!cardId || !privateCode) {
+    showToast(userCardId ? 'Ingresa tu PIN para confirmar' : 'Ingresa el ID de tarjeta y el PIN', 'warning');
+    return;
+  }
   if (!quantity || quantity < 1) { showToast('La cantidad debe ser al menos 1', 'warning'); return; }
 
   setLoading(btn, true);
@@ -512,7 +677,8 @@ window.confirmPurchase = async () => {
         privateCode, 
         productId: selectedProductId, 
         quantity,
-        selectedSeats: window.selectedCinemaSeats || []
+        selectedSeats: window.selectedCinemaSeats || [],
+        applyThursday2x1: isThursday()
       }),
     });
     const data = await res.json();
@@ -579,13 +745,45 @@ async function loadPurchases() {
       const prod = productMap[tx.productId];
       const date = tx.timestamp?.toDate ? tx.timestamp.toDate().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '—';
       const imgEl = prod?.imageUrl ? `<img src="${prod.imageUrl}" alt="${tx.productName}"/>` : (tx.productType === 'service' ? '⚙️' : (tx.productType === 'cinema' ? '🍿' : '📦'));
-      return `<div class="purchase-item">
-        <div class="purchase-thumb">${imgEl}</div>
-        <div style="flex:1">
-          <div class="font-bold text-sm">${esc(tx.productName||'—')}</div>
-          <div class="text-xs text-muted">Qty: ${tx.quantity||1} · ${date}</div>
+      
+      let extraHtml = '';
+      if (tx.productType === 'cinema' && tx.cinemaTicket) {
+        const seats = tx.selectedSeats || [];
+        extraHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.1)">
+          <div class="text-xs text-muted mb-2">🎟️ Código de reserva: <strong>${tx.cinemaTicket.ticketCode}</strong></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">`;
+        
+        if (seats.length > 0) {
+          seats.forEach(seat => {
+            const qrData = encodeURIComponent(`Seat:${seat}|Code:${tx.cinemaTicket.ticketCode}`);
+            extraHtml += `<div style="text-align:center;background:#fff;padding:6px;border-radius:6px;width:fit-content">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrData}" style="width:70px;height:70px;image-rendering:pixelated"/>
+              <div style="color:#000;font-size:11px;font-weight:800;margin-top:4px">Silla ${seat}</div>
+            </div>`;
+          });
+        } else {
+          // Si no hay sillas específicas, se generan QRs por cantidad
+          for (let i = 0; i < (tx.quantity || 1); i++) {
+            const qrData = encodeURIComponent(`Ticket:${i+1}|Code:${tx.cinemaTicket.ticketCode}`);
+            extraHtml += `<div style="text-align:center;background:#fff;padding:6px;border-radius:6px;width:fit-content">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrData}" style="width:70px;height:70px;image-rendering:pixelated"/>
+              <div style="color:#000;font-size:11px;font-weight:800;margin-top:4px">Entrada</div>
+            </div>`;
+          }
+        }
+        extraHtml += `</div></div>`;
+      }
+
+      return `<div class="purchase-item" style="display:block">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="purchase-thumb">${imgEl}</div>
+          <div style="flex:1">
+            <div class="font-bold text-sm">${esc(tx.productName||'—')}</div>
+            <div class="text-xs text-muted">Qty: ${tx.quantity||1} · ${date}</div>
+          </div>
+          <div class="text-success font-bold">${fmt(tx.amount)}</div>
         </div>
-        <div class="text-success font-bold">${fmt(tx.amount)}</div>
+        ${extraHtml}
       </div>`;
     }).join('');
   } catch (err) {

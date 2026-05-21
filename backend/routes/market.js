@@ -14,7 +14,7 @@ const LOW_BALANCE = Number(process.env.LOW_BALANCE_THRESHOLD) || 10000;
 
 /* ─── POST /purchase — compra en el market con cardId + privateCode ──── */
 router.post('/purchase', verifyToken, async (req, res) => {
-  const { cardId, privateCode, productId, quantity = 1, selectedSeats } = req.body;
+  const { cardId, privateCode, productId, quantity = 1, selectedSeats, applyThursday2x1 } = req.body;
 
   if (!cardId || !privateCode || !productId)
     return res.status(400).json({ success: false, error: 'cardId, privateCode y productId son requeridos' });
@@ -94,8 +94,31 @@ router.post('/purchase', verifyToken, async (req, res) => {
     let discountApplied = 0;
     let discountPercentage = 0;
     let convenioId = null;
+    let thursday2x1Applied = false;
 
-    /* ── 7.5 Verificar descuento por convenio ─────────────────────── */
+    /* ── 7.5 Jueves 2×1 en cine ────────────────────────────────────── */
+    if (product.type === 'cinema' && applyThursday2x1) {
+      // Verify server-side that today is actually Thursday
+      const today = new Date();
+      // Use Colombia timezone (UTC-5) for consistency
+      const colombiaOffset = -5 * 60; // minutes
+      const utcMinutes = today.getUTCHours() * 60 + today.getUTCMinutes();
+      const colombiaDate = new Date(today.getTime() + (colombiaOffset * 60 * 1000));
+      const dayOfWeek = colombiaDate.getUTCDay(); // 0=Sun, 4=Thu
+      
+      if (dayOfWeek === 4) {
+        // Thursday 2x1: only charge for half the tickets (ceil to handle odd numbers)
+        const paidSeats = Math.ceil(qty / 2);
+        const freeSeats = qty - paidSeats;
+        const thursday2x1Discount = product.price * freeSeats;
+        totalAmount = totalAmount - thursday2x1Discount;
+        discountApplied += thursday2x1Discount;
+        thursday2x1Applied = true;
+        console.log(`[Market] Jueves 2x1 aplicado: ${qty} boletas, pagando ${paidSeats}, gratis ${freeSeats}. Descuento: $${thursday2x1Discount}`);
+      }
+    }
+
+    /* ── 7.6 Verificar descuento por convenio ─────────────────────── */
     const userEmail = buyer.email?.toLowerCase() || '';
     const emailDomain = userEmail.split('@')[1];
     
@@ -113,8 +136,9 @@ router.post('/purchase', verifyToken, async (req, res) => {
         discountPercentage = isService 
           ? (convenio.discountServices || 0)
           : (convenio.discountProducts || 0);
-        discountApplied = Math.round(totalAmount * (discountPercentage / 100));
-        totalAmount = totalAmount - discountApplied;
+        const convenioDiscount = Math.round(totalAmount * (discountPercentage / 100));
+        discountApplied += convenioDiscount;
+        totalAmount = totalAmount - convenioDiscount;
         convenioId = conveniosSnap.docs[0].id;
       }
     }
@@ -148,6 +172,16 @@ router.post('/purchase', verifyToken, async (req, res) => {
       batch.update(productRef, { reservedSeats: FieldValue.arrayUnion(...selectedSeats) });
     }
 
+    /* ── 9. Emisión de boletos de cine (si aplica) ────────────────── */
+    let cinemaTicket = null;
+    if (product.type === 'cinema') {
+      const provider = product.cinemaProvider || 'Cine Colombia';
+      cinemaTicket = await issueCinemaTicket(req.uid, provider, product.name, qty, selectedSeats).catch(e => {
+        console.error('[CineService] Error emitiendo boleto:', e);
+        return null;
+      });
+    }
+
     // Crear transacción
     const txId = addTransactionToBatch(batch, {
       type:          'market_purchase',
@@ -165,20 +199,12 @@ router.post('/purchase', verifyToken, async (req, res) => {
       convenioId,
       balanceBefore,
       balanceAfter,
-      description:   `Compra: ${product.name} x${qty}${discountApplied > 0 ? ` (DESC: ${discountPercentage}%)` : ''}`,
+      description:   `Compra: ${product.name} x${qty}${thursday2x1Applied ? ' (2×1 Jueves)' : ''}${discountPercentage > 0 ? ` (DESC: ${discountPercentage}%)` : ''}`,
+      selectedSeats: selectedSeats || [],
+      ...(cinemaTicket && { cinemaTicket })
     });
 
     await batch.commit();
-
-    /* ── 9. Emisión de boletos de cine (si aplica) ────────────────── */
-    let cinemaTicket = null;
-    if (product.type === 'cinema') {
-      const provider = product.cinemaProvider || 'Cine Colombia';
-      cinemaTicket = await issueCinemaTicket(req.uid, provider, product.name, qty, selectedSeats).catch(e => {
-        console.error('[CineService] Error emitiendo boleto:', e);
-        return null;
-      });
-    }
 
     /* ── 10. Notificaciones ────────────────────────────────────────── */
     sendNotificationToUser(req.uid, '🛒 Compra exitosa', `Compraste "${product.name}" por $${totalAmount.toLocaleString('es-CO')}.`, { type: 'market_purchase', txId }).catch(console.error);
@@ -197,7 +223,9 @@ router.post('/purchase', verifyToken, async (req, res) => {
       discountApplied,
       discountPercentage,
       finalAmount:          totalAmount,
-      ...(discountApplied > 0 && { discountMessage: `¡Descuento por convenio aplicado! -$${discountApplied.toLocaleString('es-CO')}` }),
+      ...(discountApplied > 0 && { discountMessage: thursday2x1Applied 
+        ? `¡Jueves 2×1 aplicado! ${Math.floor(qty/2)} boleta(s) gratis. Ahorro: $${(product.price * Math.floor(qty/2)).toLocaleString('es-CO')}${discountPercentage > 0 ? ` + convenio ${discountPercentage}%` : ''}`
+        : `¡Descuento por convenio aplicado! -$${discountApplied.toLocaleString('es-CO')}` }),
       ...(cinemaTicket && { cinemaTicket })
     });
 
