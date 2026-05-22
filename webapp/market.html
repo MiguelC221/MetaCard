@@ -484,7 +484,7 @@ function renderProducts() {
     return;
   }
 
-  const thursday = isThursday();
+  const thursday = isCinemaPromoDay();
 
   document.getElementById('productsGrid').innerHTML = filtered.map(p => {
     const stockLabel = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : (p.stock > 0 ? `${p.stock} en stock` : '⚠️ Sin stock');
