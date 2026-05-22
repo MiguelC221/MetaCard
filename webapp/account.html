@@ -32,9 +32,8 @@
       }
 
       @media (max-width: 768px) {
-        
         .app-layout {
-          grid-template-columns: 1fr; 
+          grid-template-columns: 1fr;
         }
 
         .sidebar {
@@ -1382,7 +1381,7 @@
       function setRoleBadge(role) {
         const badge = document.getElementById("roleBadge");
         const labels = {
-          buyer: "Comprador",
+          buyer: "Clientes",
           seller: "Vendedor",
           admin: "Administrador",
         };
@@ -1596,8 +1595,89 @@
                 maxDate = r.approvedAt || r.requestedAt || null;
               }
             });
-            document.getElementById("longestRechargeAmount").textContent =
-              `$${maxAmount.toLocaleString()}`;
+            const rechargeAmount = document.getElementById("rechargeAmount");
+            if (rechargeAmount) {
+              rechargeAmount.addEventListener("input", (event) => {
+                const raw = event.target.value;
+                const digits = raw.replace(/\D/g, "");
+                event.target.value = digits
+                  ? "$" + Number(digits).toLocaleString("es-CO")
+                  : "";
+
+                // Plan preview
+                const amount = Number(digits) || 0;
+                const preview = document.getElementById("planPreview");
+                const icon = document.getElementById("planPreviewIcon");
+                const name = document.getElementById("planPreviewName");
+                const desc = document.getElementById("planPreviewDesc");
+                const badge = document.getElementById("planPreviewBadge");
+
+                const plans = [
+                  {
+                    min: 0,
+                    max: 149999,
+                    label: "Básico",
+                    emoji: "🔵",
+                    color: "#6366f1",
+                    text: "Hasta $149.999 — acceso básico a la plataforma",
+                  },
+                  {
+                    min: 150000,
+                    max: 399999,
+                    label: "Salud+",
+                    emoji: "🟢",
+                    color: "#10b981",
+                    text: "$150.000 – $399.999 — beneficios de salud incluidos",
+                  },
+                  {
+                    min: 800000,
+                    max: Infinity,
+                    label: "Elite",
+                    emoji: "🔴",
+                    color: "#f97316",
+                    text: "Desde $800.000 — acceso completo y beneficios elite",
+                  },
+                ];
+
+                // Gap entre Salud+ y Elite (400k–799k) no activa ningún plan
+                const gap = amount >= 400000 && amount <= 799999;
+
+                if (!digits || amount === 0) {
+                  preview.classList.add("hidden");
+                  return;
+                }
+
+                const plan = plans.find(
+                  (p) => amount >= p.min && amount <= p.max,
+                );
+
+                if (gap) {
+                  preview.classList.remove("hidden");
+                  preview.style.borderColor = "#eab308";
+                  icon.textContent = "⚠️";
+                  name.textContent = "Monto sin plan";
+                  name.style.color = "#eab308";
+                  desc.textContent =
+                    "$400.000 – $799.999 no activa ningún plan. Considera recargar desde $800.000 para Elite.";
+                  badge.textContent = "";
+                  badge.style.background = "transparent";
+                } else if (plan) {
+                  preview.classList.remove("hidden");
+                  preview.style.borderColor = plan.color;
+                  icon.textContent = plan.emoji;
+                  name.textContent = "Plan " + plan.label;
+                  name.style.color = plan.color;
+                  desc.textContent = plan.text;
+                  badge.textContent = plan.label.toUpperCase();
+                  badge.style.background = plan.color;
+                }
+              });
+
+              rechargeAmount.addEventListener("blur", (event) => {
+                const value = parseCurrencyValue(event.target.value);
+                event.target.value = value ? formatCurrencyDisplay(value) : "";
+              });
+            }
             document.getElementById("longestRechargeDetail").textContent =
               maxDate && maxDate.toDate
                 ? `El ${maxDate.toDate().toLocaleDateString("es-ES")}`
@@ -1854,26 +1934,15 @@
             return;
           }
 
-          // 3. ¡PIN CORRECTO! Ahora traemos la identificación real desde la colección 'users'
-          const userDoc = await db.collection("users").doc(user.uid).get();
-
-          if (userDoc.exists) {
-            // Extraemos el campo 'identification' tal como se guardó en el registro
-            const userData = userDoc.data();
-            cachedIdentification = userData.identification || "No registrada";
-
-            // Mostrar la información en pantalla
-            idSpan.textContent = cachedIdentification;
-            revealBtn.textContent = "🙈 Ocultar";
-            idVisible = true;
-            showToast("Identificación revelada correctamente.", "success");
-          } else {
-            showToast(
-              "No se encontraron datos de perfil del usuario.",
-              "error",
-            );
-            idSpan.textContent = "Error de datos";
-          }
+          // PIN correcto — mostrar identificación (ya la tenemos en userData)
+          cachedIdentification =
+            (userData && userData.identification) ||
+            window.fullIdentification ||
+            "No registrada";
+          idSpan.textContent = cachedIdentification;
+          revealBtn.textContent = "🙈 Ocultar";
+          idVisible = true;
+          showToast("Identificación revelada correctamente.", "success");
         } catch (error) {
           console.error("Error en el proceso de revelación:", error);
           showToast("Error al conectar con la base de datos.", "error");

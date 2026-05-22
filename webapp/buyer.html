@@ -1,929 +1,1670 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="icon" href="icono.png">
-  <title>MetaCard — Mi cuenta</title>
-  <meta name="description" content="Dashboard del comprador MetaCard: saldo, recargas, historial y beneficios."/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="assets/css/styles.css"/>
-  <style>
-    /* User menu dropdown styles */
-    .topbar-user-menu {
-      position: relative;
-    }
-
-    .topbar-user {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid transparent;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-
-    .topbar-user[disabled] {
-      opacity: 0.7;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-    .topbar-user:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .topbar-loader {
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      border-top: 2px solid #ffffff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-    }
-
-    .topbar-loader.hidden {
-      display: none;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Quick top-ups styles */
-    .quick-topups {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin: 12px 0 20px;
-      align-items: stretch;
-    }
-
-    .plan-card {
-      padding: 12px;
-      border-radius: 10px;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 86px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    }
-
-    .plan-card h3 { margin: 0 0 6px 0; font-size: 15px; }
-    .plan-card .price { font-weight:700; font-size:18px; }
-
-    .plan-activo { background: linear-gradient(135deg,#06b6d4,#3b82f6); }
-    .plan-salud  { background: linear-gradient(135deg,#34d399,#059669); }
-    .plan-elite  { background: linear-gradient(135deg,#f97316,#ef4444); }
-
-    @media (max-width: 900px) {
-      .quick-topups { grid-template-columns: repeat(2,1fr); }
-    }
-    @media (max-width: 480px) {
-      .quick-topups { grid-template-columns: 1fr; }
-    }
-
-    /* Highlighted quick-ups container */
-    .highlighted-quickups {
-      padding: 14px;
-      border-radius: 12px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      margin-bottom: 12px;
-    }
-
-    .highlighted-quickups .section-title { font-weight:700; font-size:15px; margin-bottom:4px }
-    .highlighted-quickups .section-sub { font-size:12px; color:var(--text-muted); }
-
-    /* High-contrast CTA for plan cards */
-    .btn-contrast {
-      background: #ffffff;
-      color: #0b1220;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-weight: 700;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.12);
-      cursor: pointer;
-    }
-
-    .btn-contrast:hover { transform: translateY(-2px); }
-    .plan-card .btn-contrast { background: rgba(255,255,255,0.95); }
-
-    .topbar-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    .topbar-user-arrow {
-      display: inline-block;
-      font-size: 12px;
-      color: var(--text-muted);
-      transition: transform 0.2s;
-    }
-
-    .topbar-user:hover .topbar-user-arrow {
-      transform: translateY(2px);
-    }
-
-    .user-menu {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 10px);
-      min-width: 180px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-      z-index: 200;
-    }
-
-    .user-menu.hidden {
-      display: none;
-    }
-
-    .user-menu-item {
-      width: 100%;
-      padding: 12px 14px;
-      border: none;
-      background: none;
-      color: var(--text-primary);
-      text-align: left;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background var(--transition);
-    }
-
-    .user-menu-item:hover {
-      background: rgba(99, 102, 241, 0.12);
-    }
-
-    .user-menu-item + .user-menu-item {
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    @media (max-width: 768px) {
-      .user-menu {
-        min-width: 160px;
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="icon" href="icono.png" />
+    <title>MetaCard — Mi cuenta</title>
+    <meta
+      name="description"
+      content="Dashboard del comprador MetaCard: saldo, recargas, historial y beneficios."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <style>
+      /* User menu dropdown styles */
+      .topbar-user-menu {
+        position: relative;
       }
 
       .topbar-user {
-        padding: 6px 10px;
-      }
-
-      .topbar-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
-      }
-    }
-
-    /* ─────────────────────────────────────────────────────────────── */
-    /* RESPONSIVE NAVIGATION                                           */
-    /* ─────────────────────────────────────────────────────────────── */
-    .hamburger-btn {
-      display: none;
-      background: none;
-      border: none;
-      color: var(--text-primary);
-      font-size: 24px;
-      cursor: pointer;
-      padding: 8px;
-      align-items: center;
-      justify-content: center;
-      margin-right: 12px;
-    }
-
-    .mobile-menu-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 98;
-      top: 60px;
-    }
-
-    .mobile-menu-overlay.active {
-      display: block;
-    }
-
-    @media (max-width: 768px) {
-      .app-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .hamburger-btn {
-        display: flex;
-      }
-
-      .sidebar {
-        position: fixed;
-        left: 0;
-        top: 60px;
-        width: 100%;
-        max-width: 280px;
-        height: calc(100vh - 60px);
-        z-index: 99;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        border-right: 1px solid var(--border);
-      }
-
-      .sidebar.active {
-        transform: translateX(0);
-      }
-
-      .main-content {
-        padding: 20px;
-      }
-
-      .topbar-right {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 12px;
-      }
-    }
-
-    @media (max-width: 484px) {
-      .hamburger-btn {
-        display: flex;
-        margin-right: 8px;
-      }
-
-      .topbar-logo {
-        gap: 8px;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        cursor: pointer;
       }
 
-      .topbar-logo span {
-        font-size: 16px;
+      .topbar-user[disabled] {
+        opacity: 0.7;
+        cursor: not-allowed;
+        pointer-events: none;
       }
 
-      .topbar-user {
-        padding: 4px 8px;
-        gap: 6px;
+      .topbar-user:hover {
+        background: rgba(255, 255, 255, 0.08);
       }
 
-      .topbar-avatar {
-        width: 28px;
-        height: 28px;
-        font-size: 14px;
+      .topbar-loader {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top: 2px solid #ffffff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
       }
 
-      .topbar-user-arrow {
+      .topbar-loader.hidden {
         display: none;
       }
 
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Quick top-ups styles */
+      .quick-topups {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 12px 0 20px;
+        align-items: stretch;
+      }
+
+      .plan-card {
+        padding: 12px;
+        border-radius: 10px;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 86px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      }
+
+      .plan-card h3 {
+        margin: 0 0 6px 0;
+        font-size: 15px;
+      }
+      .plan-card .price {
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .plan-activo {
+        background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      }
+      .plan-salud {
+        background: linear-gradient(135deg, #34d399, #059669);
+      }
+      .plan-elite {
+        background: linear-gradient(135deg, #f97316, #ef4444);
+      }
+
+      @media (max-width: 900px) {
+        .quick-topups {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 480px) {
+        .quick-topups {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Highlighted quick-ups container */
+      .highlighted-quickups {
+        padding: 14px;
+        border-radius: 12px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        margin-bottom: 12px;
+      }
+
+      .highlighted-quickups .section-title {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .highlighted-quickups .section-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* High-contrast CTA for plan cards */
+      .btn-contrast {
+        background: #ffffff;
+        color: #0b1220;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 700;
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+        cursor: pointer;
+      }
+
+      .btn-contrast:hover {
+        transform: translateY(-2px);
+      }
+      .plan-card .btn-contrast {
+        background: rgba(255, 255, 255, 0.95);
+      }
+
+      .topbar-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .topbar-user-arrow {
+        display: inline-block;
+        font-size: 12px;
+        color: var(--text-muted);
+        transition: transform 0.2s;
+      }
+
+      .topbar-user:hover .topbar-user-arrow {
+        transform: translateY(2px);
+      }
+
       .user-menu {
-        right: -10px;
-        min-width: 150px;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        min-width: 180px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        z-index: 200;
       }
 
-      .main-content {
-        padding: 16px;
+      .user-menu.hidden {
+        display: none;
       }
-    }
-  </style>
-</head>
-<body>
-<div id="toast-container"></div>
 
-<div class="app-layout" id="appLayout">
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="topbar-logo">
-      <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <div style="background-color: #fff; border-radius: 50%; padding: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);">
-        <img src="icono.png" alt="MetaCard" style="width: 100%; height: 100%; object-fit: contain;">
-      </div>
-      <span>MetaCard</span>
-    </div>
-    <div class="topbar-right">
-      <div class="topbar-user-menu">
-        <button class="topbar-user" id="topbarUserBtn" onclick="toggleUserMenu(event)" disabled>
-          <div class="topbar-avatar" id="userAvatar">👤</div>
-          <span class="topbar-loader hidden" id="navbarLoader"></span>
-          <span id="topbarName" class="text-secondary text-sm"></span>
-          <span class="topbar-user-arrow">▼</span>
+      .user-menu-item {
+        width: 100%;
+        padding: 12px 14px;
+        border: none;
+        background: none;
+        color: var(--text-primary);
+        text-align: left;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background var(--transition);
+      }
+
+      .user-menu-item:hover {
+        background: rgba(99, 102, 241, 0.12);
+      }
+
+      .user-menu-item + .user-menu-item {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      @media (max-width: 768px) {
+        .user-menu {
+          min-width: 160px;
+        }
+
+        .topbar-user {
+          padding: 6px 10px;
+        }
+
+        .topbar-avatar {
+          width: 32px;
+          height: 32px;
+          font-size: 16px;
+        }
+      }
+
+      /* ─────────────────────────────────────────────────────────────── */
+      /* RESPONSIVE NAVIGATION                                           */
+      /* ─────────────────────────────────────────────────────────────── */
+      .hamburger-btn {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 24px;
+        cursor: pointer;
+        padding: 8px;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+      }
+
+      .mobile-menu-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 98;
+        top: 60px;
+      }
+
+      .mobile-menu-overlay.active {
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        .app-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .hamburger-btn {
+          display: flex;
+        }
+
+        .sidebar {
+          position: fixed;
+          left: 0;
+          top: 60px;
+          width: 100%;
+          max-width: 280px;
+          height: calc(100vh - 60px);
+          z-index: 99;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+          border-right: 1px solid var(--border);
+        }
+
+        .sidebar.active {
+          transform: translateX(0);
+        }
+
+        .main-content {
+          padding: 20px;
+        }
+
+        .topbar-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+      }
+
+      @media (max-width: 484px) {
+        .hamburger-btn {
+          display: flex;
+          margin-right: 8px;
+        }
+
+        .topbar-logo {
+          gap: 8px;
+        }
+
+        .topbar-logo span {
+          font-size: 16px;
+        }
+
+        .topbar-user {
+          padding: 4px 8px;
+          gap: 6px;
+        }
+
+        .topbar-avatar {
+          width: 28px;
+          height: 28px;
+          font-size: 14px;
+        }
+
+        .topbar-user-arrow {
+          display: none;
+        }
+
+        .user-menu {
+          right: -10px;
+          min-width: 150px;
+        }
+
+        .main-content {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+
+    <div class="app-layout" id="appLayout">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-logo">
+          <button
+            class="hamburger-btn"
+            id="hamburgerBtn"
+            onclick="toggleMobileMenu()"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div
+            style="
+              background-color: #fff;
+              border-radius: 50%;
+              padding: 4px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
+              box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);
+            "
+          >
+            <img
+              src="icono.png"
+              alt="MetaCard"
+              style="width: 100%; height: 100%; object-fit: contain"
+            />
+          </div>
+          <span>MetaCard</span>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-user-menu">
+            <button
+              class="topbar-user"
+              id="topbarUserBtn"
+              onclick="toggleUserMenu(event)"
+              disabled
+            >
+              <div class="topbar-avatar" id="userAvatar">👤</div>
+              <span class="topbar-loader hidden" id="navbarLoader"></span>
+              <span id="topbarName" class="text-secondary text-sm"></span>
+              <span class="topbar-user-arrow">▼</span>
+            </button>
+            <div class="user-menu hidden" id="userMenuDropdown">
+              <div
+                style="
+                  padding: 12px 14px;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <div
+                  id="menuUserName"
+                  style="
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 160px;
+                  "
+                >
+                  —
+                </div>
+                <div
+                  id="menuUserEmail"
+                  style="
+                    font-size: 11px;
+                    color: var(--text-muted);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 160px;
+                    margin-top: 2px;
+                  "
+                >
+                  —
+                </div>
+              </div>
+              <button class="user-menu-item" onclick="goToAccount()">
+                👤 Mi Cuenta
+              </button>
+              <button class="user-menu-item" onclick="goToMarket()">
+                🛒 WebMarket
+              </button>
+              <button class="user-menu-item" onclick="logout()">
+                🚪 Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- MOBILE MENU OVERLAY -->
+      <div
+        class="mobile-menu-overlay"
+        id="mobileMenuOverlay"
+        onclick="toggleMobileMenu()"
+      ></div>
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section-label">Principal</div>
+        <button
+          class="sidebar-item active"
+          id="nav-dashboard"
+          onclick="showSection('dashboard')"
+        >
+          <span class="icon">🏠</span> Dashboard
         </button>
-        <div class="user-menu hidden" id="userMenuDropdown">
-          <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08)">
-            <div id="menuUserName" style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">—</div>
-            <div id="menuUserEmail" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;margin-top:2px">—</div>
+        <button
+          class="sidebar-item"
+          id="nav-recharge"
+          onclick="showSection('recharge')"
+        >
+          <span class="icon">💳</span> Recargar saldo
+        </button>
+        <button
+          class="sidebar-item"
+          id="nav-history"
+          onclick="showSection('history')"
+        >
+          <span class="icon">📋</span> Historial
+        </button>
+        <div class="sidebar-section-label">Compras</div>
+        <button
+          class="sidebar-item"
+          id="nav-market"
+          onclick="window.location.href = 'market.html'"
+        >
+          <span class="icon">🛒</span> WebMarket
+        </button>
+        <div class="sidebar-section-label">Cuenta</div>
+        <button
+          class="sidebar-item"
+          id="nav-account"
+          onclick="window.location.href = 'account.html'"
+        >
+          <span class="icon">👤</span> Mi Cuenta
+        </button>
+        <button
+          class="sidebar-item"
+          id="nav-card"
+          onclick="showSection('card')"
+        >
+          <span class="icon">📡</span> Mi tarjeta NFC
+        </button>
+        <button
+          class="sidebar-item"
+          id="nav-benefits"
+          onclick="showSection('benefits')"
+        >
+          <span class="icon">⭐</span> Beneficios
+        </button>
+        <button
+          class="sidebar-item"
+          id="nav-referrals"
+          onclick="showSection('referrals')"
+        >
+          <span class="icon">🤝</span> Referidos
+        </button>
+        <button
+          class="sidebar-item"
+          id="nav-tickets"
+          onclick="showSection('tickets')"
+        >
+          <span class="icon">🎫</span> Soporte
+        </button>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main-content">
+        <!-- ── DASHBOARD ── -->
+        <section id="section-dashboard">
+          <div class="page-header">
+            <h1>¡Hola, <span id="userName">—</span>! 👋</h1>
+            <p>Aquí está el resumen de tu cuenta MetaCard.</p>
           </div>
-          <button class="user-menu-item" onclick="goToAccount()">👤 Mi Cuenta</button>
-          <button class="user-menu-item" onclick="goToMarket()">🛒 WebMarket</button>
-          <button class="user-menu-item" onclick="logout()">🚪 Salir</button>
-        </div>
-      </div>
+
+          <!-- Balance card -->
+          <div class="balance-card mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <div class="balance-label">Saldo disponible</div>
+                <div class="balance-amount" id="balanceDisplay">$0</div>
+              </div>
+              <div style="text-align: right">
+                <div id="membershipBadge" class="membership-badge vital">
+                  🔵 Vital
+                </div>
+                <div class="balance-uid mt-2" id="cardUidDisplay">
+                  Sin tarjeta NFC
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="showSection('recharge')"
+              >
+                + Recargar
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="claimWeeklyBonus()"
+              >
+                🎁 Bono semanal
+              </button>
+              <a href="market.html" class="btn btn-primary btn-sm"
+                >🛒 Ir al Market</a
+              >
+            </div>
+          </div>
+
+          <!-- Recargas rápidas (sección destacada) -->
+          <div class="highlighted-quickups">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+              "
+            >
+              <div>
+                <div class="section-title">Recargas rápidas</div>
+                <div class="section-sub">
+                  Elige un monto para prellenar la recarga rápidamente y activar
+                  tu plan preferido
+                </div>
+              </div>
+            </div>
+            <div class="quick-topups" role="list" aria-label="Recargas rápidas">
+              <div class="plan-card plan-activo" role="listitem">
+                <div>
+                  <h3>Activo</h3>
+                  <div class="price">150.000 COP</div>
+                </div>
+                <div style="margin-top: 8px; text-align: right">
+                  <button
+                    class="btn-contrast btn-sm"
+                    onclick="quickTopUp(150000, 'Activo')"
+                    aria-label="Seleccionar plan Activo"
+                  >
+                    Seleccionar
+                  </button>
+                </div>
+              </div>
+
+              <div class="plan-card plan-salud" role="listitem">
+                <div>
+                  <h3>Salud</h3>
+                  <div class="price">400.000 COP</div>
+                </div>
+                <div style="margin-top: 8px; text-align: right">
+                  <button
+                    class="btn-contrast btn-sm"
+                    onclick="quickTopUp(400000, 'Salud')"
+                    aria-label="Seleccionar plan Salud"
+                  >
+                    Seleccionar
+                  </button>
+                </div>
+              </div>
+
+              <div class="plan-card plan-elite" role="listitem">
+                <div>
+                  <h3>Elite</h3>
+                  <div class="price">800.000 COP</div>
+                </div>
+                <div style="margin-top: 8px; text-align: right">
+                  <button
+                    class="btn-contrast btn-sm"
+                    onclick="quickTopUp(800000, 'Elite')"
+                    aria-label="Seleccionar plan Elite"
+                  >
+                    Seleccionar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIN privado -->
+          <div
+            class="card mb-6"
+            style="
+              border-color: rgba(99, 102, 241, 0.4);
+              background: rgba(99, 102, 241, 0.05);
+            "
+          >
+            <div class="flex justify-between items-center mb-2">
+              <div>
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--primary);
+                  "
+                >
+                  🔐 Tu Código Privado (PIN)
+                </div>
+                <div class="text-xs text-muted mt-1">
+                  Úsalo para pagar en el WebMarket.
+                </div>
+              </div>
+              <button
+                class="btn btn-ghost btn-sm"
+                onclick="regeneratePin()"
+                id="regenPinBtn"
+              >
+                🔄 Regenerar
+              </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <div
+                id="pinDisplay"
+                style="
+                  font-family: monospace;
+                  font-size: 28px;
+                  font-weight: 800;
+                  letter-spacing: 6px;
+                  color: var(--primary);
+                "
+              >
+                ••••••
+              </div>
+              <button
+                class="btn btn-ghost btn-sm"
+                onclick="togglePinDisplay()"
+                id="pinShowBtn"
+              >
+                👁️ Mostrar
+              </button>
+              <button
+                class="btn btn-ghost btn-sm"
+                onclick="copyPin()"
+                id="pinCopyBtn"
+                style="display: none"
+              >
+                📋 Copiar
+              </button>
+            </div>
+            <div class="text-xs text-muted mt-2">
+              ⚠️ No compartas tu PIN con nadie. Si lo regeneras, el anterior
+              deja de funcionar.
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid-3 mb-6">
+            <div class="stat-card">
+              <div class="stat-label">Total recargado</div>
+              <div class="stat-value" id="totalRechargedDisplay">$0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Cashback acumulado</div>
+              <div class="stat-value" id="cashbackDisplay">$0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Transacciones</div>
+              <div class="stat-value" id="txCountDisplay">0</div>
+            </div>
+          </div>
+
+          <!-- Últimas transacciones -->
+          <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h2 style="font-size: 16px; font-weight: 600">
+                Últimas transacciones
+              </h2>
+              <button
+                class="btn btn-ghost btn-sm"
+                onclick="showSection('history')"
+              >
+                Ver todas →
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody id="recentTxBody">
+                  <tr>
+                    <td
+                      colspan="4"
+                      class="text-center text-muted"
+                      style="padding: 24px"
+                    >
+                      Cargando...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── RECARGAR ── -->
+        <section id="section-recharge" class="hidden">
+          <div class="page-header">
+            <h1>Recargar saldo</h1>
+            <p>
+              Solicita una recarga. El administrador la aprueba manualmente. El
+              límite de cada recarga es de $5'000.000 COP.
+            </p>
+          </div>
+          <!-- Plan preview -->
+          <div
+            id="planPreview"
+            class="hidden"
+            style="
+              margin-top: -8px;
+              margin-bottom: 16px;
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid var(--border);
+              background: var(--bg-elevated);
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              font-size: 13px;
+              transition: all 0.2s;
+            "
+          >
+            <span id="planPreviewIcon" style="font-size: 18px"></span>
+            <div>
+              <div
+                id="planPreviewName"
+                style="font-weight: 700; color: var(--text-primary)"
+              ></div>
+              <div
+                id="planPreviewDesc"
+                style="
+                  color: var(--text-muted);
+                  font-size: 12px;
+                  margin-top: 1px;
+                "
+              ></div>
+            </div>
+            <span
+              id="planPreviewBadge"
+              style="
+                margin-left: auto;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                color: #fff;
+              "
+            ></span>
+          </div>
+
+          <div class="card" style="max-width: 520px">
+            <form id="rechargeForm" onsubmit="submitRecharge(event)">
+              <div class="form-group mb-4">
+                <label for="rechargeAmount">Monto a recargar (COP)</label>
+                <input
+                  type="text"
+                  id="rechargeAmount"
+                  inputmode="numeric"
+                  maxlength="15"
+                  placeholder="$50.000"
+                  required
+                />
+              </div>
+              <div class="form-group mb-4">
+                <label for="rechargeMethod">Método de pago</label>
+                <select id="rechargeMethod" required>
+                  <option value="">Selecciona un método</option>
+                  <option value="transfer">Transferencia bancaria</option>
+                  <option value="qr">Código QR / Nequi / Daviplata</option>
+                  <option value="cash">Efectivo en punto autorizado</option>
+                </select>
+              </div>
+              <div class="form-group mb-4">
+                <label for="rechargeNote">Nota / referencia del pago</label>
+                <input
+                  type="text"
+                  id="rechargeNote"
+                  placeholder="Número de referencia, comprobante, etc."
+                />
+              </div>
+              <div id="rechargeMsg" class="form-error hidden mb-4"></div>
+              <button
+                type="submit"
+                class="btn btn-primary btn-full"
+                id="rechargeBtn"
+              >
+                <span class="btn-text">Enviar solicitud</span>
+                <span class="btn-spinner hidden"></span>
+              </button>
+            </form>
+            <div class="separator"></div>
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px">
+              Mis solicitudes
+            </h3>
+            <div id="myRechargesList" class="text-muted text-sm">
+              Cargando...
+            </div>
+          </div>
+        </section>
+
+        <!-- ── HISTORIAL ── -->
+        <section id="section-history" class="hidden">
+          <div class="page-header"><h1>Historial de transacciones</h1></div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Balance después</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody id="fullHistoryBody">
+                  <tr>
+                    <td
+                      colspan="5"
+                      class="text-center text-muted"
+                      style="padding: 24px"
+                    >
+                      Cargando...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── TARJETA NFC ── -->
+        <section id="section-card" class="hidden">
+          <div class="page-header">
+            <h1>Mi tarjeta NFC</h1>
+            <p>Información de tu tarjeta MetaCard física.</p>
+          </div>
+          <div class="card" style="max-width: 420px; text-align: center">
+            <div class="nfc-ring mb-6"><span class="nfc-icon">📡</span></div>
+            <div id="cardInfoBlock">
+              <p class="text-muted mb-4">
+                No tienes una tarjeta NFC registrada.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── BENEFICIOS ── -->
+        <section id="section-benefits" class="hidden">
+          <div class="page-header">
+            <h1>Beneficios de membresía</h1>
+            <p>Tu nivel actual y sus ventajas.</p>
+          </div>
+          <div class="grid-2" id="benefitsGrid">
+            <!-- generado por JS -->
+          </div>
+        </section>
+
+        <!-- ── REFERIDOS ── -->
+        <section id="section-referrals" class="hidden">
+          <div class="page-header">
+            <h1>Programa de referidos</h1>
+            <p>Invita amigos y gana $20.000 por cada uno (máx. 5).</p>
+          </div>
+          <div class="card" style="max-width: 480px">
+            <div class="stat-card mb-4" style="background: var(--bg-elevated)">
+              <div class="stat-label">Tu código de referido</div>
+              <div class="flex items-center gap-2 mt-2">
+                <span
+                  class="stat-value"
+                  style="font-size: 22px; font-family: monospace"
+                  id="referralCode"
+                  >—</span
+                >
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick="copyReferral()"
+                >
+                  📋 Copiar
+                </button>
+              </div>
+            </div>
+            <div class="stat-label mb-2">Referidos cobrados</div>
+            <div id="referralList" class="text-muted text-sm">Cargando...</div>
+          </div>
+        </section>
+
+        <!-- ── TICKETS ── -->
+        <section id="section-tickets" class="hidden">
+          <div class="page-header">
+            <h1>Soporte</h1>
+            <p>Abre un ticket si tienes algún problema.</p>
+          </div>
+          <div class="card" style="max-width: 520px">
+            <form id="ticketForm" onsubmit="submitTicket(event)">
+              <div class="form-group mb-4">
+                <label for="ticketSubject">Asunto</label>
+                <input
+                  type="text"
+                  id="ticketSubject"
+                  placeholder="Describe brevemente el problema"
+                  required
+                />
+              </div>
+              <div class="form-group mb-4">
+                <label for="ticketDesc">Descripción</label>
+                <textarea
+                  id="ticketDesc"
+                  rows="4"
+                  placeholder="Detalla tu problema aquí..."
+                  required
+                  style="resize: vertical"
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                class="btn btn-primary btn-full"
+                id="ticketBtn"
+              >
+                <span class="btn-text">Enviar ticket</span>
+                <span class="btn-spinner hidden"></span>
+              </button>
+            </form>
+            <div class="separator"></div>
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px">
+              Mis tickets
+            </h3>
+            <div id="myTicketsList" class="text-muted text-sm">Cargando...</div>
+          </div>
+        </section>
+
+        <!-- Créditos -->
+        <footer
+          style="
+            margin-top: 40px;
+            padding: 16px 0 4px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            letter-spacing: 0.3px;
+          "
+        >
+          💳 MetaCard © 2026 &nbsp;·&nbsp; Desarrollado por &nbsp;👨‍💻&nbsp; Angel
+          Cardona &nbsp;·&nbsp; Tatiana Anacona &nbsp;·&nbsp; Miguel Quistial
+        </footer>
+      </main>
     </div>
-  </header>
 
-  <!-- MOBILE MENU OVERLAY -->
-  <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="assets/js/firebase-compat-config.js"></script>
+    <script>
+      let currentUser = null;
+      let userData = null;
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-section-label">Principal</div>
-    <button class="sidebar-item active" id="nav-dashboard" onclick="showSection('dashboard')"><span class="icon">🏠</span> Dashboard</button>
-    <button class="sidebar-item" id="nav-recharge"  onclick="showSection('recharge')"><span class="icon">💳</span> Recargar saldo</button>
-    <button class="sidebar-item" id="nav-history"   onclick="showSection('history')"><span class="icon">📋</span> Historial</button>
-    <div class="sidebar-section-label">Compras</div>
-    <button class="sidebar-item" id="nav-market"    onclick="window.location.href='market.html'"><span class="icon">🛒</span> WebMarket</button>
-    <div class="sidebar-section-label">Cuenta</div>
-    <button class="sidebar-item" id="nav-account"   onclick="window.location.href='account.html'"><span class="icon">👤</span> Mi Cuenta</button>
-    <button class="sidebar-item" id="nav-card"      onclick="showSection('card')"><span class="icon">📡</span> Mi tarjeta NFC</button>
-    <button class="sidebar-item" id="nav-benefits"  onclick="showSection('benefits')"><span class="icon">⭐</span> Beneficios</button>
-    <button class="sidebar-item" id="nav-referrals" onclick="showSection('referrals')"><span class="icon">🤝</span> Referidos</button>
-    <button class="sidebar-item" id="nav-tickets"   onclick="showSection('tickets')"><span class="icon">🎫</span> Soporte</button>
-  </aside>
+      // ── Auth guard ──────────────────────────────────────────────────────────────
+      auth.onAuthStateChanged(async (user) => {
+        setNavbarLoading(true);
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+        const snap = await db.collection("users").doc(user.uid).get();
+        if (
+          !snap.exists ||
+          !["buyer", "admin", "support"].includes(snap.data().role)
+        ) {
+          window.location.href = "login.html";
+          return;
+        }
+        userData = snap.data();
+        renderDashboard();
+        loadRecentTx();
+        loadMyRecharges();
+        loadFullHistory();
+        loadCard();
+        loadReferrals();
+        loadTickets();
+        // Restaurar sección guardada
+        const saved = localStorage.getItem("buyerSection") || "dashboard";
+        showSection(saved);
+        setNavbarLoading(false);
+      });
 
-  <!-- MAIN -->
-  <main class="main-content">
+      function renderDashboard() {
+        const displayName = userData.name || currentUser.displayName || "";
+        const displayEmail = userData.email || currentUser.email || "";
+        // Topbar: show first name (or email prefix if no name)
+        const shortName = displayName
+          ? displayName.split(" ")[0]
+          : displayEmail.split("@")[0];
+        document.getElementById("topbarName").textContent = shortName;
+        // Avatar: first letter of name or email
+        const initial = (displayName || displayEmail).charAt(0).toUpperCase();
+        document.getElementById("userAvatar").textContent = initial || "👤";
+        // Dropdown header
+        document.body.classList.add("role-buyer");
+        document.getElementById("menuUserName").textContent =
+          displayName || shortName;
+        document.getElementById("menuUserEmail").textContent = displayEmail;
+        document.getElementById("userName").textContent = shortName;
+        document.getElementById("balanceDisplay").textContent = fmt(
+          userData.balance || 0,
+        );
+        document.getElementById("totalRechargedDisplay").textContent = fmt(
+          userData.totalRecharged || 0,
+        );
+        document.getElementById("referralCode").textContent =
+          userData.referralCode || "—";
+        setMembershipBadge(userData.membershipLevel || "vital");
+        renderBenefits(userData.membershipLevel || "vital");
+      }
 
-    <!-- ── DASHBOARD ── -->
-    <section id="section-dashboard">
-      <div class="page-header">
-        <h1>¡Hola, <span id="userName">—</span>! 👋</h1>
-        <p>Aquí está el resumen de tu cuenta MetaCard.</p>
-      </div>
+      function setMembershipBadge(level) {
+        const labels = {
+          vital: "🔵 Vital",
+          activo: "🟢 Activo",
+          saludPlus: "💚 Salud+",
+          elite: "⭐ Elite",
+        };
+        const el = document.getElementById("membershipBadge");
+        el.textContent = labels[level] || "🔵 Vital";
+        el.className = `membership-badge ${level}`;
+      }
 
-      <!-- Balance card -->
-      <div class="balance-card mb-6">
-        <div class="flex justify-between items-center mb-4">
-          <div>
-            <div class="balance-label">Saldo disponible</div>
-            <div class="balance-amount" id="balanceDisplay">$0</div>
-          </div>
-          <div style="text-align:right">
-            <div id="membershipBadge" class="membership-badge vital">🔵 Vital</div>
-            <div class="balance-uid mt-2" id="cardUidDisplay">Sin tarjeta NFC</div>
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button class="btn btn-secondary btn-sm" onclick="showSection('recharge')">+ Recargar</button>
-          <button class="btn btn-secondary btn-sm" onclick="claimWeeklyBonus()">🎁 Bono semanal</button>
-          <a href="market.html" class="btn btn-primary btn-sm">🛒 Ir al Market</a>
-        </div>
-      </div>
+      async function loadRecentTx() {
+        const snap = await db
+          .collection("transactions")
+          .where("buyerId", "==", currentUser.uid)
+          .limit(50)
+          .get()
+          .catch(() => null);
+        const body = document.getElementById("recentTxBody");
+        if (!snap || snap.empty) {
+          body.innerHTML =
+            '<tr><td colspan="4" class="text-center text-muted" style="padding:24px">Sin transacciones aún</td></tr>';
+          return;
+        }
+        const rows = snap.docs.map((d) => d.data());
+        rows.sort(
+          (a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0),
+        );
+        body.innerHTML = rows
+          .slice(0, 5)
+          .map((tx) => txRow(tx, 4))
+          .join("");
+        document.getElementById("txCountDisplay").textContent = snap.size;
+      }
 
-      <!-- Recargas rápidas (sección destacada) -->
-      <div class="highlighted-quickups">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div>
-            <div class="section-title">Recargas rápidas</div>
-            <div class="section-sub">Elige un monto para prellenar la recarga rápidamente</div>
-          </div>
-        </div>
-        <div class="quick-topups" role="list" aria-label="Recargas rápidas">
-          <div class="plan-card plan-activo" role="listitem">
-            <div>
-              <h3>Activo</h3>
-              <div class="price">150.000 COP</div>
-            </div>
-            <div style="margin-top:8px;text-align:right"><button class="btn-contrast btn-sm" onclick="quickTopUp(150000,'Activo')" aria-label="Seleccionar plan Activo">Seleccionar</button></div>
-          </div>
+      async function loadFullHistory() {
+        const snap = await db
+          .collection("transactions")
+          .where("buyerId", "==", currentUser.uid)
+          .limit(100)
+          .get()
+          .catch(() => null);
+        const body = document.getElementById("fullHistoryBody");
+        if (!snap || snap.empty) {
+          body.innerHTML =
+            '<tr><td colspan="5" class="text-center text-muted" style="padding:24px">Sin transacciones</td></tr>';
+          return;
+        }
+        let cashback = 0;
+        const rows = snap.docs.map((d) => d.data());
+        rows.sort(
+          (a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0),
+        );
+        body.innerHTML = rows
+          .map((tx) => {
+            if (tx.type === "cashback") cashback += tx.amount || 0;
+            return txRow(tx, 5);
+          })
+          .join("");
+        document.getElementById("cashbackDisplay").textContent = fmt(cashback);
+      }
 
-          <div class="plan-card plan-salud" role="listitem">
-            <div>
-              <h3>Salud</h3>
-              <div class="price">400.000 COP</div>
-            </div>
-            <div style="margin-top:8px;text-align:right"><button class="btn-contrast btn-sm" onclick="quickTopUp(400000,'Salud')" aria-label="Seleccionar plan Salud">Seleccionar</button></div>
-          </div>
+      function txRow(tx, cols) {
+        const typeLabel = {
+          payment: "Pago",
+          recharge: "Recarga",
+          cashback: "Cashback",
+          bonus: "Bono",
+          referral: "Referido",
+          freeze: "Congelado",
+          market_purchase: "Market",
+        };
+        const typeClass = {
+          payment: "badge-danger",
+          recharge: "badge-success",
+          cashback: "badge-info",
+          bonus: "badge-warning",
+          referral: "badge-success",
+          freeze: "badge-muted",
+          market_purchase: "badge-info",
+        };
+        const sign = ["recharge", "cashback", "bonus", "referral"].includes(
+          tx.type,
+        )
+          ? "+"
+          : "-";
+        const color =
+          sign === "+" ? "color:var(--success)" : "color:var(--danger)";
+        const date = tx.timestamp?.toDate
+          ? tx.timestamp.toDate().toLocaleDateString("es-CO")
+          : "—";
+        const desc =
+          tx.description ||
+          (tx.type === "market_purchase"
+            ? `Market: ${tx.productName || "producto"}`
+            : "—");
+        if (cols === 4)
+          return `<tr><td><span class="badge ${typeClass[tx.type] || "badge-muted"}">${typeLabel[tx.type] || tx.type}</span></td><td>${desc}</td><td style="${color}">${sign}${fmt(tx.amount)}</td><td>${date}</td></tr>`;
+        return `<tr><td><span class="badge ${typeClass[tx.type] || "badge-muted"}">${typeLabel[tx.type] || tx.type}</span></td><td>${desc}</td><td style="${color}">${sign}${fmt(tx.amount)}</td><td>${tx.balanceAfter != null ? fmt(tx.balanceAfter) : "—"}</td><td>${date}</td></tr>`;
+      }
 
-          <div class="plan-card plan-elite" role="listitem">
-            <div>
-              <h3>Elite</h3>
-              <div class="price">800.000 COP</div>
-            </div>
-            <div style="margin-top:8px;text-align:right"><button class="btn-contrast btn-sm" onclick="quickTopUp(800000,'Elite')" aria-label="Seleccionar plan Elite">Seleccionar</button></div>
-          </div>
-        </div>
-      </div>
+      async function loadMyRecharges() {
+        const snap = await db
+          .collection("rechargeRequests")
+          .where("userId", "==", currentUser.uid)
+          .orderBy("requestedAt", "desc")
+          .limit(10)
+          .get()
+          .catch(() => null);
+        const el = document.getElementById("myRechargesList");
+        if (!snap || snap.empty) {
+          el.textContent = "Sin solicitudes de recarga.";
+          return;
+        }
+        el.innerHTML = snap.docs
+          .map((d) => {
+            const r = d.data();
+            const st = {
+              pending: "badge-warning",
+              approved: "badge-success",
+              rejected: "badge-danger",
+            };
+            const date = r.requestedAt?.toDate
+              ? r.requestedAt.toDate().toLocaleDateString("es-CO")
+              : "—";
+            return `<div class="flex justify-between items-center" style="padding:10px 0;border-bottom:1px solid var(--border)"><div><div class="font-bold">${fmt(r.amount)}</div><div class="text-xs text-muted">${r.method} · ${date}</div></div><span class="badge ${st[r.status] || "badge-muted"}">${r.status}</span></div>`;
+          })
+          .join("");
+      }
 
-      <!-- PIN privado -->
-      <div class="card mb-6" style="border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.05)">
-        <div class="flex justify-between items-center mb-2">
-          <div><div style="font-size:13px;font-weight:700;color:var(--primary)">🔐 Tu Código Privado (PIN)</div>
-          <div class="text-xs text-muted mt-1">Úsalo para pagar en el WebMarket.</div></div>
-          <button class="btn btn-ghost btn-sm" onclick="regeneratePin()" id="regenPinBtn">🔄 Regenerar</button>
-        </div>
-        <div class="flex items-center gap-3">
-          <div id="pinDisplay" style="font-family:monospace;font-size:28px;font-weight:800;letter-spacing:6px;color:var(--primary)">••••••</div>
-          <button class="btn btn-ghost btn-sm" onclick="togglePinDisplay()" id="pinShowBtn">👁️ Mostrar</button>
-          <button class="btn btn-ghost btn-sm" onclick="copyPin()" id="pinCopyBtn" style="display:none">📋 Copiar</button>
-        </div>
-        <div class="text-xs text-muted mt-2">⚠️ No compartas tu PIN con nadie. Si lo regeneras, el anterior deja de funcionar.</div>
-      </div>
+      async function loadCard() {
+        const snap = await db
+          .collection("cards")
+          .where("userId", "==", currentUser.uid)
+          .limit(1)
+          .get()
+          .catch(() => null);
+        const el = document.getElementById("cardInfoBlock");
+        if (!snap || snap.empty) return;
+        const card = snap.docs[0].data();
+        const uid = snap.docs[0].id;
+        document.getElementById("cardUidDisplay").textContent = `UID: ${uid}`;
+        el.innerHTML = `<div class="stat-label">UID de tarjeta</div><div style="font-family:monospace;font-size:18px;margin:8px 0">${uid}</div><span class="badge ${card.status === "active" ? "badge-success" : "badge-danger"}">${card.status === "active" ? "✓ Activa" : "✗ Bloqueada"}</span>`;
+      }
 
-      <!-- Stats -->
-      <div class="grid-3 mb-6">
-        <div class="stat-card">
-          <div class="stat-label">Total recargado</div>
-          <div class="stat-value" id="totalRechargedDisplay">$0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Cashback acumulado</div>
-          <div class="stat-value" id="cashbackDisplay">$0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Transacciones</div>
-          <div class="stat-value" id="txCountDisplay">0</div>
-        </div>
-      </div>
+      async function loadReferrals() {
+        const snap = await db
+          .collection("referrals")
+          .doc(currentUser.uid)
+          .get()
+          .catch(() => null);
+        const el = document.getElementById("referralList");
+        if (!snap || !snap.exists) {
+          el.textContent = "Aún no has referido a nadie.";
+          return;
+        }
+        el.innerHTML = `<div class="stat-card" style="background:var(--bg-elevated);margin-bottom:12px"><div class="stat-label">Total referidos</div><div class="stat-value">${snap.data().count || 0} / 5</div></div>`;
+      }
 
-      <!-- Últimas transacciones -->
-      <div class="card">
-        <div class="flex justify-between items-center mb-4">
-          <h2 style="font-size:16px;font-weight:600">Últimas transacciones</h2>
-          <button class="btn btn-ghost btn-sm" onclick="showSection('history')">Ver todas →</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Fecha</th></tr></thead>
-            <tbody id="recentTxBody"><tr><td colspan="4" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── RECARGAR ── -->
-    <section id="section-recharge" class="hidden">
-      <div class="page-header"><h1>Recargar saldo</h1><p>Solicita una recarga. El administrador la aprueba manualmente.</p></div>
-      <div class="card" style="max-width:520px">
-        <form id="rechargeForm" onsubmit="submitRecharge(event)">
-          <div class="form-group mb-4">
-            <label for="rechargeAmount">Monto a recargar (COP)</label>
-            <input type="number" id="rechargeAmount" min="10000" step="1000" placeholder="50000" required/>
-          </div>
-          <div class="form-group mb-4">
-            <label for="rechargeMethod">Método de pago</label>
-            <select id="rechargeMethod" required>
-              <option value="">Selecciona un método</option>
-              <option value="transfer">Transferencia bancaria</option>
-              <option value="qr">Código QR / Nequi / Daviplata</option>
-              <option value="cash">Efectivo en punto autorizado</option>
-            </select>
-          </div>
-          <div class="form-group mb-4">
-            <label for="rechargeNote">Nota / referencia del pago</label>
-            <input type="text" id="rechargeNote" placeholder="Número de referencia, comprobante, etc."/>
-          </div>
-          <div id="rechargeMsg" class="form-error hidden mb-4"></div>
-          <button type="submit" class="btn btn-primary btn-full" id="rechargeBtn">
-            <span class="btn-text">Enviar solicitud</span>
-            <span class="btn-spinner hidden"></span>
-          </button>
-        </form>
-        <div class="separator"></div>
-        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Mis solicitudes</h3>
-        <div id="myRechargesList" class="text-muted text-sm">Cargando...</div>
-      </div>
-    </section>
-
-    <!-- ── HISTORIAL ── -->
-    <section id="section-history" class="hidden">
-      <div class="page-header"><h1>Historial de transacciones</h1></div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Balance después</th><th>Fecha</th></tr></thead>
-            <tbody id="fullHistoryBody"><tr><td colspan="5" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── TARJETA NFC ── -->
-    <section id="section-card" class="hidden">
-      <div class="page-header"><h1>Mi tarjeta NFC</h1><p>Información de tu tarjeta MetaCard física.</p></div>
-      <div class="card" style="max-width:420px;text-align:center">
-        <div class="nfc-ring mb-6"><span class="nfc-icon">📡</span></div>
-        <div id="cardInfoBlock">
-          <p class="text-muted mb-4">No tienes una tarjeta NFC registrada.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── BENEFICIOS ── -->
-    <section id="section-benefits" class="hidden">
-      <div class="page-header"><h1>Beneficios de membresía</h1><p>Tu nivel actual y sus ventajas.</p></div>
-      <div class="grid-2" id="benefitsGrid">
-        <!-- generado por JS -->
-      </div>
-    </section>
-
-    <!-- ── REFERIDOS ── -->
-    <section id="section-referrals" class="hidden">
-      <div class="page-header"><h1>Programa de referidos</h1><p>Invita amigos y gana $20.000 por cada uno (máx. 5).</p></div>
-      <div class="card" style="max-width:480px">
-        <div class="stat-card mb-4" style="background:var(--bg-elevated)">
-          <div class="stat-label">Tu código de referido</div>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="stat-value" style="font-size:22px;font-family:monospace" id="referralCode">—</span>
-            <button class="btn btn-secondary btn-sm" onclick="copyReferral()">📋 Copiar</button>
-          </div>
-        </div>
-        <div class="stat-label mb-2">Referidos cobrados</div>
-        <div id="referralList" class="text-muted text-sm">Cargando...</div>
-      </div>
-    </section>
-
-    <!-- ── TICKETS ── -->
-    <section id="section-tickets" class="hidden">
-      <div class="page-header"><h1>Soporte</h1><p>Abre un ticket si tienes algún problema.</p></div>
-      <div class="card" style="max-width:520px">
-        <form id="ticketForm" onsubmit="submitTicket(event)">
-          <div class="form-group mb-4">
-            <label for="ticketSubject">Asunto</label>
-            <input type="text" id="ticketSubject" placeholder="Describe brevemente el problema" required/>
-          </div>
-          <div class="form-group mb-4">
-            <label for="ticketDesc">Descripción</label>
-            <textarea id="ticketDesc" rows="4" placeholder="Detalla tu problema aquí..." required style="resize:vertical"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary btn-full" id="ticketBtn">
-            <span class="btn-text">Enviar ticket</span>
-            <span class="btn-spinner hidden"></span>
-          </button>
-        </form>
-        <div class="separator"></div>
-        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Mis tickets</h3>
-        <div id="myTicketsList" class="text-muted text-sm">Cargando...</div>
-      </div>
-    </section>
-
-    <!-- Créditos -->
-    <footer style="margin-top:40px;padding:16px 0 4px;border-top:1px solid var(--border);text-align:center;color:var(--text-muted);font-size:11px;letter-spacing:0.3px">
-      💳 MetaCard © 2026 &nbsp;·&nbsp; Desarrollado por &nbsp;👨‍💻&nbsp;
-      Angel Cardona &nbsp;·&nbsp; Tatiana Anacona &nbsp;·&nbsp; Miguel Quistial
-    </footer>
-  </main>
-</div>
-
-<!-- Firebase SDK Compat -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="assets/js/firebase-compat-config.js"></script>
-<script>
-
-let currentUser = null;
-let userData    = null;
-
-
-
-// ── Auth guard ──────────────────────────────────────────────────────────────
-auth.onAuthStateChanged(async user => {
-  setNavbarLoading(true);
-  if (!user) { window.location.href = 'login.html'; return; }
-  currentUser = user;
-  const snap  = await db.collection('users').doc(user.uid).get();
-  if (!snap.exists || !['buyer','admin','support'].includes(snap.data().role)) { window.location.href = 'login.html'; return; }
-  userData = snap.data();
-  renderDashboard();
-  loadRecentTx();
-  loadMyRecharges();
-  loadFullHistory();
-  loadCard();
-  loadReferrals();
-  loadTickets();
-  // Restaurar sección guardada
-  const saved = localStorage.getItem('buyerSection') || 'dashboard';
-  showSection(saved);
-  setNavbarLoading(false);
-});
-
-
-function renderDashboard() {
-  const displayName = userData.name || currentUser.displayName || '';
-  const displayEmail = userData.email || currentUser.email || '';
-  // Topbar: show first name (or email prefix if no name)
-  const shortName = displayName ? displayName.split(' ')[0] : displayEmail.split('@')[0];
-  document.getElementById('topbarName').textContent = shortName;
-  // Avatar: first letter of name or email
-  const initial = (displayName || displayEmail).charAt(0).toUpperCase();
-  document.getElementById('userAvatar').textContent = initial || '👤';
-  // Dropdown header
-  document.body.classList.add('role-buyer');
-  document.getElementById('menuUserName').textContent  = displayName || shortName;
-  document.getElementById('menuUserEmail').textContent = displayEmail;
-  document.getElementById('userName').textContent   = shortName;
-  document.getElementById('balanceDisplay').textContent    = fmt(userData.balance || 0);
-  document.getElementById('totalRechargedDisplay').textContent = fmt(userData.totalRecharged || 0);
-  document.getElementById('referralCode').textContent     = userData.referralCode || '—';
-  setMembershipBadge(userData.membershipLevel || 'vital');
-  renderBenefits(userData.membershipLevel || 'vital');
-}
-
-function setMembershipBadge(level) {
-  const labels = { vital:'🔵 Vital', activo:'🟢 Activo', saludPlus:'💚 Salud+', elite:'⭐ Elite' };
-  const el = document.getElementById('membershipBadge');
-  el.textContent = labels[level] || '🔵 Vital';
-  el.className = `membership-badge ${level}`;
-}
-
-async function loadRecentTx() {
-  const snap = await db.collection('transactions').where('buyerId','==',currentUser.uid).limit(50).get().catch(()=>null);
-  const body = document.getElementById('recentTxBody');
-  if (!snap || snap.empty) { body.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:24px">Sin transacciones aún</td></tr>'; return; }
-  const rows = snap.docs.map(d => d.data());
-  rows.sort((a,b) => (b.timestamp?.seconds||0) - (a.timestamp?.seconds||0));
-  body.innerHTML = rows.slice(0, 5).map(tx => txRow(tx, 4)).join('');
-  document.getElementById('txCountDisplay').textContent = snap.size;
-}
-
-async function loadFullHistory() {
-  const snap = await db.collection('transactions').where('buyerId','==',currentUser.uid).limit(100).get().catch(()=>null);
-  const body = document.getElementById('fullHistoryBody');
-  if (!snap || snap.empty) { body.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:24px">Sin transacciones</td></tr>'; return; }
-  let cashback = 0;
-  const rows = snap.docs.map(d => d.data());
-  rows.sort((a,b) => (b.timestamp?.seconds||0) - (a.timestamp?.seconds||0));
-  body.innerHTML = rows.map(tx => { if(tx.type==='cashback') cashback+=tx.amount||0; return txRow(tx, 5); }).join('');
-  document.getElementById('cashbackDisplay').textContent = fmt(cashback);
-}
-
-function txRow(tx, cols) {
-  const typeLabel = { payment:'Pago', recharge:'Recarga', cashback:'Cashback', bonus:'Bono', referral:'Referido', freeze:'Congelado', market_purchase:'Market' };
-  const typeClass = { payment:'badge-danger', recharge:'badge-success', cashback:'badge-info', bonus:'badge-warning', referral:'badge-success', freeze:'badge-muted', market_purchase:'badge-info' };
-  const sign  = ['recharge','cashback','bonus','referral'].includes(tx.type) ? '+' : '-';
-  const color = sign === '+' ? 'color:var(--success)' : 'color:var(--danger)';
-  const date  = tx.timestamp?.toDate ? tx.timestamp.toDate().toLocaleDateString('es-CO') : '—';
-  const desc  = tx.description || (tx.type === 'market_purchase' ? `Market: ${tx.productName||'producto'}` : '—');
-  if (cols === 4) return `<tr><td><span class="badge ${typeClass[tx.type]||'badge-muted'}">${typeLabel[tx.type]||tx.type}</span></td><td>${desc}</td><td style="${color}">${sign}${fmt(tx.amount)}</td><td>${date}</td></tr>`;
-  return `<tr><td><span class="badge ${typeClass[tx.type]||'badge-muted'}">${typeLabel[tx.type]||tx.type}</span></td><td>${desc}</td><td style="${color}">${sign}${fmt(tx.amount)}</td><td>${tx.balanceAfter!=null?fmt(tx.balanceAfter):'—'}</td><td>${date}</td></tr>`;
-}
-
-async function loadMyRecharges() {
-  const snap = await db.collection('rechargeRequests').where('userId','==',currentUser.uid).orderBy('requestedAt','desc').limit(10).get().catch(()=>null);
-  const el = document.getElementById('myRechargesList');
-  if (!snap || snap.empty) { el.textContent = 'Sin solicitudes de recarga.'; return; }
-  el.innerHTML = snap.docs.map(d => {
-    const r = d.data();
-    const st = { pending:'badge-warning', approved:'badge-success', rejected:'badge-danger' };
-    const date = r.requestedAt?.toDate ? r.requestedAt.toDate().toLocaleDateString('es-CO') : '—';
-    return `<div class="flex justify-between items-center" style="padding:10px 0;border-bottom:1px solid var(--border)"><div><div class="font-bold">${fmt(r.amount)}</div><div class="text-xs text-muted">${r.method} · ${date}</div></div><span class="badge ${st[r.status]||'badge-muted'}">${r.status}</span></div>`;
-  }).join('');
-}
-
-async function loadCard() {
-  const snap = await db.collection('cards').where('userId','==',currentUser.uid).limit(1).get().catch(()=>null);
-  const el = document.getElementById('cardInfoBlock');
-  if (!snap || snap.empty) return;
-  const card = snap.docs[0].data();
-  const uid  = snap.docs[0].id;
-  document.getElementById('cardUidDisplay').textContent = `UID: ${uid}`;
-  el.innerHTML = `<div class="stat-label">UID de tarjeta</div><div style="font-family:monospace;font-size:18px;margin:8px 0">${uid}</div><span class="badge ${card.status==='active'?'badge-success':'badge-danger'}">${card.status==='active'?'✓ Activa':'✗ Bloqueada'}</span>`;
-}
-
-async function loadReferrals() {
-  const snap = await db.collection('referrals').doc(currentUser.uid).get().catch(()=>null);
-  const el   = document.getElementById('referralList');
-  if (!snap || !snap.exists) { el.textContent = 'Aún no has referido a nadie.'; return; }
-  el.innerHTML = `<div class="stat-card" style="background:var(--bg-elevated);margin-bottom:12px"><div class="stat-label">Total referidos</div><div class="stat-value">${snap.data().count||0} / 5</div></div>`;
-}
-
-async function loadTickets() {
-  const snap = await db.collection('tickets').where('userId','==',currentUser.uid).orderBy('createdAt','desc').get().catch(()=>null);
-  const el = document.getElementById('myTicketsList');
-  if (!snap || snap.empty) { el.textContent = 'No tienes tickets abiertos.'; return; }
-  el.innerHTML = snap.docs.map(d => {
-    const t = d.data();
-    const st = { open:'badge-info', inProgress:'badge-warning', closed:'badge-muted' };
-    return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      async function loadTickets() {
+        const snap = await db
+          .collection("tickets")
+          .where("userId", "==", currentUser.uid)
+          .orderBy("createdAt", "desc")
+          .get()
+          .catch(() => null);
+        const el = document.getElementById("myTicketsList");
+        if (!snap || snap.empty) {
+          el.textContent = "No tienes tickets abiertos.";
+          return;
+        }
+        el.innerHTML = snap.docs
+          .map((d) => {
+            const t = d.data();
+            const st = {
+              open: "badge-info",
+              inProgress: "badge-warning",
+              closed: "badge-muted",
+            };
+            return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
       <div class="flex justify-between">
         <span class="font-bold text-sm">${t.subject}</span>
-        <span class="badge ${st[t.status]||'badge-muted'}">${t.status}</span>
+        <span class="badge ${st[t.status] || "badge-muted"}">${t.status}</span>
       </div>
       <div class="text-xs text-muted mt-1">${t.description}</div>
-      ${t.adminResponse ? `<div style="margin-top:8px;padding:8px;border-radius:var(--radius-sm);background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25)">
+      ${
+        t.adminResponse
+          ? `<div style="margin-top:8px;padding:8px;border-radius:var(--radius-sm);background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25)">
         <div class="text-xs font-bold" style="color:#67e8f9;margin-bottom:2px">📬 Respuesta del soporte:</div>
         <div class="text-xs text-secondary">${t.adminResponse}</div>
-      </div>` : ''}
+      </div>`
+          : ""
+      }
     </div>`;
-  }).join('');
-}
+          })
+          .join("");
+      }
 
-function renderBenefits(level) {
-  const BENEFITS = {
-    vital:     { icon:'🔵', name:'Vital',   color:'#94a3b8', items:['Comercios aliados','Tarifas preferenciales','Bono bienvenida $10.000 COP'] },
-    activo:    { icon:'🟢', name:'Activo',  color:'#93c5fd', items:['Todo VITAL incluido','5% cashback en deportes','5% extra supermercados (mar/jue)','2x1 cine los jueves','Eventos gratuitos','Atención preferencial básica'] },
-    saludPlus: { icon:'💚', name:'Salud+',  color:'#6ee7b7', items:['Todo ACTIVO incluido','15% desc. salud y gimnasio','10–15% farmacias','Beneficio familiar','2 pases gym / mes','Prioridad citas médicas'] },
-    elite:     { icon:'⭐', name:'Elite',   color:'#fcd34d', items:['Todo SALUD+ incluido','10–15% OFF ocio y consumo','2h parqueadero gratis','Atención VIP · Fast Track','Servicio Concierge','Bono de cumpleaños'] },
-  };
-  const order = ['vital','activo','saludPlus','elite'];
-  const currentIdx = order.indexOf(level);
-  document.getElementById('benefitsGrid').innerHTML = order.map((lv, i) => {
-    const b = BENEFITS[lv];
-    const active = i <= currentIdx;
-    return `<div class="card" style="opacity:${active?1:0.4};border-color:${active?b.color+'55':'var(--border)'}">
+      function renderBenefits(level) {
+        const BENEFITS = {
+          vital: {
+            icon: "🔵",
+            name: "Vital",
+            color: "#94a3b8",
+            items: [
+              "Comercios aliados",
+              "Tarifas preferenciales",
+              "Bono bienvenida $10.000 COP",
+            ],
+          },
+          activo: {
+            icon: "🟢",
+            name: "Activo",
+            color: "#93c5fd",
+            items: [
+              "Todo VITAL incluido",
+              "5% cashback en deportes",
+              "5% extra supermercados (mar/jue)",
+              "2x1 cine los jueves",
+              "Eventos gratuitos",
+              "Atención preferencial básica",
+            ],
+          },
+          saludPlus: {
+            icon: "💚",
+            name: "Salud+",
+            color: "#6ee7b7",
+            items: [
+              "Todo ACTIVO incluido",
+              "15% desc. salud y gimnasio",
+              "10–15% farmacias",
+              "Beneficio familiar",
+              "2 pases gym / mes",
+              "Prioridad citas médicas",
+            ],
+          },
+          elite: {
+            icon: "⭐",
+            name: "Elite",
+            color: "#fcd34d",
+            items: [
+              "Todo SALUD+ incluido",
+              "10–15% OFF ocio y consumo",
+              "2h parqueadero gratis",
+              "Atención VIP · Fast Track",
+              "Servicio Concierge",
+              "Bono de cumpleaños",
+            ],
+          },
+        };
+        const order = ["vital", "activo", "saludPlus", "elite"];
+        const currentIdx = order.indexOf(level);
+        document.getElementById("benefitsGrid").innerHTML = order
+          .map((lv, i) => {
+            const b = BENEFITS[lv];
+            const active = i <= currentIdx;
+            return `<div class="card" style="opacity:${active ? 1 : 0.4};border-color:${active ? b.color + "55" : "var(--border)"}">
       <div style="font-size:24px;margin-bottom:8px">${b.icon}</div>
       <div style="font-weight:700;color:${b.color};margin-bottom:12px">${b.name}</div>
       <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
-        ${b.items.map(item=>`<li class="text-sm text-secondary">✓ ${item}</li>`).join('')}
+        ${b.items.map((item) => `<li class="text-sm text-secondary">✓ ${item}</li>`).join("")}
       </ul>
-      ${active?`<div class="badge badge-success mt-4" style="width:fit-content">Activo</div>`:''}
+      ${active ? `<div class="badge badge-success mt-4" style="width:fit-content">Activo</div>` : ""}
     </div>`;
-  }).join('');
-}
+          })
+          .join("");
+      }
 
-// ── User Menu Dropdown ───────────────────────────────────────────────────────
-window.toggleUserMenu = (e) => {
-  e.stopPropagation();
-  const menu = document.getElementById('userMenuDropdown');
-  menu.classList.toggle('hidden');
-};
+      // ── User Menu Dropdown ───────────────────────────────────────────────────────
+      window.toggleUserMenu = (e) => {
+        e.stopPropagation();
+        const menu = document.getElementById("userMenuDropdown");
+        menu.classList.toggle("hidden");
+      };
 
-window.goToAccount = () => {
-  window.location.href = 'account.html';
-};
+      window.goToAccount = () => {
+        window.location.href = "account.html";
+      };
 
-window.goToMarket = () => {
-  window.location.href = 'market.html';
-};
+      window.goToMarket = () => {
+        window.location.href = "market.html";
+      };
 
-// Close menu when clicking outside
-document.addEventListener('click', () => {
-  const menu = document.getElementById('userMenuDropdown');
-  if (menu && !menu.classList.contains('hidden')) {
-    menu.classList.add('hidden');
-  }
-});
+      // Close menu when clicking outside
+      document.addEventListener("click", () => {
+        const menu = document.getElementById("userMenuDropdown");
+        if (menu && !menu.classList.contains("hidden")) {
+          menu.classList.add("hidden");
+        }
+      });
 
-// ── Mobile Menu Toggle ───────────────────────────────────────────────────────
-window.toggleMobileMenu = () => {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('mobileMenuOverlay');
-  sidebar.classList.toggle('active');
-  overlay.classList.toggle('active');
-};
+      // ── Mobile Menu Toggle ───────────────────────────────────────────────────────
+      window.toggleMobileMenu = () => {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("mobileMenuOverlay");
+        sidebar.classList.toggle("active");
+        overlay.classList.toggle("active");
+      };
 
-// Close mobile menu when clicking on a sidebar item
-document.addEventListener('DOMContentLoaded', () => {
-  const sidebarItems = document.querySelectorAll('.sidebar-item');
-  sidebarItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('mobileMenuOverlay');
-      sidebar.classList.remove('active');
-      overlay.classList.remove('active');
-    });
-  });
-});
+      // Close mobile menu when clicking on a sidebar item
+      document.addEventListener("DOMContentLoaded", () => {
+        const sidebarItems = document.querySelectorAll(".sidebar-item");
+        sidebarItems.forEach((item) => {
+          item.addEventListener("click", () => {
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("mobileMenuOverlay");
+            sidebar.classList.remove("active");
+            overlay.classList.remove("active");
+          });
+        });
 
-// ── Acciones ─────────────────────────────────────────────────────────────────
-window.submitRecharge = async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('rechargeBtn');
-  setLoading(btn, true);
-  try {
-    await db.collection('rechargeRequests').add({
-      userId:      currentUser.uid,
-      amount:      Number(document.getElementById('rechargeAmount').value),
-      method:      document.getElementById('rechargeMethod').value,
-      proofNote:   document.getElementById('rechargeNote').value,
-      status:      'pending',
-      requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    showToast('Solicitud enviada. El administrador la revisará pronto.', 'success');
-    e.target.reset();
-    loadMyRecharges();
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  } finally { setLoading(btn, false); }
-};
+        const rechargeAmount = document.getElementById("rechargeAmount");
+        if (rechargeAmount) {
+          rechargeAmount.addEventListener("input", (event) => {
+            const raw = event.target.value;
+            const digits = raw.replace(/\D/g, "");
+            event.target.value = digits
+              ? "$" + Number(digits).toLocaleString("es-CO")
+              : "";
 
-window.claimWeeklyBonus = async () => {
-  const token = await currentUser.getIdToken();
-  const r = await fetch(`${BACKEND_URL}/bonuses/weekly`, {
-    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-    body: JSON.stringify({ userId: currentUser.uid }),
-  });
-  const data = await r.json();
-  showToast(data.success ? `¡Bono de $${data.bonusAmount} acreditado! 🎉` : data.error, data.success ? 'success' : 'warning');
-};
+            // ── Plan preview ──────────────────────────────────────────
+            const amount = Number(digits) || 0;
+            const preview = document.getElementById("planPreview");
+            const icon = document.getElementById("planPreviewIcon");
+            const name = document.getElementById("planPreviewName");
+            const desc = document.getElementById("planPreviewDesc");
+            const badge = document.getElementById("planPreviewBadge");
 
-// Quick top-up helper: prefill recharge amount and open recharge section
-window.quickTopUp = (amount, plan) => {
-  const input = document.getElementById('rechargeAmount');
-  if (input) input.value = amount;
-  showToast(`Plan ${plan} seleccionado: ${amount.toLocaleString('es-CO')} COP`, 'info');
-  showSection('recharge');
-  setTimeout(() => input?.focus(), 150);
-};
+            if (!digits || amount === 0) {
+              preview.classList.add("hidden");
+              return;
+            }
 
-window.submitTicket = async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('ticketBtn');
-  setLoading(btn, true);
-  try {
-    await db.collection('tickets').add({
-      userId:      currentUser.uid,
-      subject:     document.getElementById('ticketSubject').value,
-      description: document.getElementById('ticketDesc').value,
-      status:      'open',
-      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    showToast('Ticket enviado. Te responderemos pronto.', 'success');
-    e.target.reset(); loadTickets();
-  } catch (err) { showToast(err.message, 'error'); }
-  finally { setLoading(btn, false); }
-};
+            const plans = [
+              {
+                min: 0,
+                max: 149999,
+                label: "Vital",
+                emoji: "⚪",
+                color: "#ffffff",
+                text: "Hasta $149.999 — acceso básico a la plataforma",
+              },
+              {
+                min: 150000,
+                max: 399999,
+                label: "Básico",
+                emoji: "🔵",
+                color: "#6366f1",
+                text: "$150.000 – $399.999 — beneficios de salud incluidos",
+              },
+              {
+                min: 400000,
+                max: 799999,
+                label: "Salud+",
+                emoji: "🟢",
+                color: "#10b981",
+                text: "$400.000 – $799.999 — beneficios de salud incluidos + descuentos especiales",
+              },
+              {
+                min: 800000,
+                max: Infinity,
+                label: "Elite",
+                emoji: "🔴",
+                color: "#f97316",
+                text: "Desde $800.000 — acceso completo y beneficios elite",
+              },
+            ];
+            const plan = plans.find((p) => amount >= p.min && amount <= p.max);
 
-window.copyReferral = () => {
-  navigator.clipboard.writeText(userData.referralCode || '');
-  showToast('Código copiado al portapapeles', 'info');
-};
+            preview.classList.remove("hidden");
+            if (plan) {
+              preview.style.borderColor = plan.color;
+              icon.textContent = plan.emoji;
+              name.textContent = "Plan " + plan.label;
+              name.style.color = plan.color;
+              desc.textContent = plan.text;
+              badge.textContent = plan.label.toUpperCase();
+              badge.style.background = plan.color;
+            }
+          });
+          rechargeAmount.addEventListener("blur", (event) => {
+            const value = parseCurrencyValue(event.target.value);
+            event.target.value = value ? formatCurrencyDisplay(value) : "";
+          });
+        }
+      });
 
-window.logout = () => auth.signOut().then(() => window.location.href = 'login.html');
+      // ── Acciones ─────────────────────────────────────────────────────────────────
+      window.submitRecharge = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("rechargeBtn");
+        const amountInput = document.getElementById("rechargeAmount");
+        const amount = parseCurrencyValue(amountInput.value);
+        const minAmount = 10000;
+        const maxAmount = 5000000;
+        if (amount < minAmount) {
+          showToast(
+            `El monto mínimo por recarga es ${fmt(minAmount)}.`,
+            "warning",
+          );
+          amountInput.focus();
+          return;
+        }
+        if (amount > maxAmount) {
+          showToast(
+            `El monto máximo por recarga es ${fmt(maxAmount)}.`,
+            "warning",
+          );
+          amountInput.focus();
+          return;
+        }
+        setLoading(btn, true);
+        try {
+          await db.collection("rechargeRequests").add({
+            userId: currentUser.uid,
+            amount: amount,
+            method: document.getElementById("rechargeMethod").value,
+            proofNote: document.getElementById("rechargeNote").value,
+            status: "pending",
+            requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          showToast(
+            "Solicitud enviada. El administrador la revisará pronto.",
+            "success",
+          );
+          e.target.reset();
+          loadMyRecharges();
+        } catch (err) {
+          showToast("Error: " + err.message, "error");
+        } finally {
+          setLoading(btn, false);
+        }
+      };
 
-let _pinPlain = null;
-window.togglePinDisplay = () => {
-  const el  = document.getElementById('pinDisplay');
-  const btn = document.getElementById('pinShowBtn');
-  const copyBtn = document.getElementById('pinCopyBtn');
-  if (el.textContent === '••••••') {
-    el.textContent = _pinPlain || '(regenera para ver)';
-    btn.textContent = '🙈 Ocultar';
-    copyBtn.style.display = '';
-  } else {
-    el.textContent = '••••••';
-    btn.textContent = '👁️ Mostrar';
-    copyBtn.style.display = 'none';
-  }
-};
+      window.claimWeeklyBonus = async () => {
+        const token = await currentUser.getIdToken();
+        const r = await fetch(`${BACKEND_URL}/bonuses/weekly`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ userId: currentUser.uid }),
+        });
+        const data = await r.json();
+        showToast(
+          data.success
+            ? `¡Bono de $${data.bonusAmount} acreditado! 🎉`
+            : data.error,
+          data.success ? "success" : "warning",
+        );
+      };
 
-window.copyPin = () => {
-  if (_pinPlain) { navigator.clipboard.writeText(_pinPlain); showToast('PIN copiado', 'info'); }
-};
+      // Quick top-up helper: prefill recharge amount and open recharge section
+      window.quickTopUp = (amount, plan) => {
+        const input = document.getElementById("rechargeAmount");
+        if (input) input.value = formatCurrencyDisplay(amount);
+        showToast(
+          `Plan ${plan} seleccionado: ${amount.toLocaleString("es-CO")} COP`,
+          "info",
+        );
+        showSection("recharge");
+        setTimeout(() => input?.focus(), 150);
+      };
 
-window.regeneratePin = async () => {
-  if (!confirm('¿Regenerar tu PIN? El anterior dejará de funcionar.')) return;
-  const btn = document.getElementById('regenPinBtn');
-  btn.disabled = true;
-  try {
-    const token = await currentUser.getIdToken();
-    const res   = await fetch(`${BACKEND_URL}/users/regenerate-pin`, {
-      method: 'POST', headers: { 'Authorization': 'Bearer ' + token },
-    });
-    const data = await res.json();
-    if (data.success) {
-      _pinPlain = data.privateCodePlain;
-      document.getElementById('pinDisplay').textContent = _pinPlain;
-      document.getElementById('pinShowBtn').textContent = '🙈 Ocultar';
-      document.getElementById('pinCopyBtn').style.display = '';
-      showToast('PIN regenerado. Anótalo ahora.', 'success');
-    } else showToast(data.error, 'error');
-  } catch (err) { showToast('Error: ' + err.message, 'error'); }
-  finally { btn.disabled = false; }
-};
+      window.submitTicket = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("ticketBtn");
+        setLoading(btn, true);
+        try {
+          await db.collection("tickets").add({
+            userId: currentUser.uid,
+            subject: document.getElementById("ticketSubject").value,
+            description: document.getElementById("ticketDesc").value,
+            status: "open",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          showToast("Ticket enviado. Te responderemos pronto.", "success");
+          e.target.reset();
+          loadTickets();
+        } catch (err) {
+          showToast(err.message, "error");
+        } finally {
+          setLoading(btn, false);
+        }
+      };
 
-// ── Nav ───────────────────────────────────────────────────────────────────────
-window.showSection = (name) => {
-  document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
-  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
-  document.getElementById(`section-${name}`)?.classList.remove('hidden');
-  document.getElementById(`nav-${name}`)?.classList.add('active');
-  localStorage.setItem('buyerSection', name);  // guardar posición
-};
+      window.copyReferral = () => {
+        navigator.clipboard.writeText(userData.referralCode || "");
+        showToast("Código copiado al portapapeles", "info");
+      };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function setNavbarLoading(active) {
-  const btn = document.getElementById('topbarUserBtn');
-  const loader = document.getElementById('navbarLoader');
-  if (!btn || !loader) return;
-  btn.disabled = active;
-  loader.classList.toggle('hidden', !active);
-}
+      window.logout = () =>
+        auth.signOut().then(() => (window.location.href = "login.html"));
 
-function fmt(n) { return '$' + Number(n).toLocaleString('es-CO'); }
-function setLoading(btn, v) { btn.querySelector('.btn-text').classList.toggle('hidden',v); btn.querySelector('.btn-spinner').classList.toggle('hidden',!v); btn.disabled=v; }
-window.showToast = (msg, type='info') => {
-  const t = document.createElement('div');
-  t.className = `toast toast-${type}`; t.textContent = msg;
-  document.getElementById('toast-container').appendChild(t);
-  setTimeout(()=>t.remove(), 4000);
-};
-</script>
-</body>
+      let _pinPlain = null;
+      window.togglePinDisplay = () => {
+        const el = document.getElementById("pinDisplay");
+        const btn = document.getElementById("pinShowBtn");
+        const copyBtn = document.getElementById("pinCopyBtn");
+        if (el.textContent === "••••••") {
+          el.textContent = _pinPlain || "(regenera para ver)";
+          btn.textContent = "🙈 Ocultar";
+          copyBtn.style.display = "";
+        } else {
+          el.textContent = "••••••";
+          btn.textContent = "👁️ Mostrar";
+          copyBtn.style.display = "none";
+        }
+      };
+
+      window.copyPin = () => {
+        if (_pinPlain) {
+          navigator.clipboard.writeText(_pinPlain);
+          showToast("PIN copiado", "info");
+        }
+      };
+
+      window.regeneratePin = async () => {
+        if (!confirm("¿Regenerar tu PIN? El anterior dejará de funcionar."))
+          return;
+        const btn = document.getElementById("regenPinBtn");
+        btn.disabled = true;
+        try {
+          const token = await currentUser.getIdToken();
+          const res = await fetch(`${BACKEND_URL}/users/regenerate-pin`, {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token },
+          });
+          const data = await res.json();
+          if (data.success) {
+            _pinPlain = data.privateCodePlain;
+            document.getElementById("pinDisplay").textContent = _pinPlain;
+            document.getElementById("pinShowBtn").textContent = "🙈 Ocultar";
+            document.getElementById("pinCopyBtn").style.display = "";
+            showToast("PIN regenerado. Anótalo ahora.", "success");
+          } else showToast(data.error, "error");
+        } catch (err) {
+          showToast("Error: " + err.message, "error");
+        } finally {
+          btn.disabled = false;
+        }
+      };
+
+      // ── Nav ───────────────────────────────────────────────────────────────────────
+      window.showSection = (name) => {
+        document
+          .querySelectorAll('[id^="section-"]')
+          .forEach((s) => s.classList.add("hidden"));
+        document
+          .querySelectorAll(".sidebar-item")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById(`section-${name}`)?.classList.remove("hidden");
+        document.getElementById(`nav-${name}`)?.classList.add("active");
+        localStorage.setItem("buyerSection", name); // guardar posición
+      };
+
+      // ── Helpers ──────────────────────────────────────────────────────────────────
+      function setNavbarLoading(active) {
+        const btn = document.getElementById("topbarUserBtn");
+        const loader = document.getElementById("navbarLoader");
+        if (!btn || !loader) return;
+        btn.disabled = active;
+        loader.classList.toggle("hidden", !active);
+      }
+
+      function fmt(n) {
+        return "$" + Number(n).toLocaleString("es-CO");
+      }
+      function parseCurrencyValue(value) {
+        return Number(value.replace(/[^0-9]/g, "")) || 0;
+      }
+      function formatCurrencyDisplay(value) {
+        return value ? "$" + Number(value).toLocaleString("es-CO") : "";
+      }
+      function setLoading(btn, v) {
+        btn.querySelector(".btn-text").classList.toggle("hidden", v);
+        btn.querySelector(".btn-spinner").classList.toggle("hidden", !v);
+        btn.disabled = v;
+      }
+      window.showToast = (msg, type = "info") => {
+        const t = document.createElement("div");
+        t.className = `toast toast-${type}`;
+        t.textContent = msg;
+        document.getElementById("toast-container").appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+      };
+    </script>
+  </body>
 </html>
