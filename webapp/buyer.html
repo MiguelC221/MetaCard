@@ -55,6 +55,67 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Quick top-ups styles */
+    .quick-topups {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 12px 0 20px;
+      align-items: stretch;
+    }
+
+    .plan-card {
+      padding: 12px;
+      border-radius: 10px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 86px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    .plan-card h3 { margin: 0 0 6px 0; font-size: 15px; }
+    .plan-card .price { font-weight:700; font-size:18px; }
+
+    .plan-activo { background: linear-gradient(135deg,#06b6d4,#3b82f6); }
+    .plan-salud  { background: linear-gradient(135deg,#34d399,#059669); }
+    .plan-elite  { background: linear-gradient(135deg,#f97316,#ef4444); }
+
+    @media (max-width: 900px) {
+      .quick-topups { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 480px) {
+      .quick-topups { grid-template-columns: 1fr; }
+    }
+
+    /* Highlighted quick-ups container */
+    .highlighted-quickups {
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .highlighted-quickups .section-title { font-weight:700; font-size:15px; margin-bottom:4px }
+    .highlighted-quickups .section-sub { font-size:12px; color:var(--text-muted); }
+
+    /* High-contrast CTA for plan cards */
+    .btn-contrast {
+      background: #ffffff;
+      color: #0b1220;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.12);
+      cursor: pointer;
+    }
+
+    .btn-contrast:hover { transform: translateY(-2px); }
+    .plan-card .btn-contrast { background: rgba(255,255,255,0.95); }
+
     .topbar-avatar {
       width: 34px;
       height: 34px;
@@ -321,6 +382,41 @@
           <button class="btn btn-secondary btn-sm" onclick="showSection('recharge')">+ Recargar</button>
           <button class="btn btn-secondary btn-sm" onclick="claimWeeklyBonus()">🎁 Bono semanal</button>
           <a href="market.html" class="btn btn-primary btn-sm">🛒 Ir al Market</a>
+        </div>
+      </div>
+
+      <!-- Recargas rápidas (sección destacada) -->
+      <div class="highlighted-quickups">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <div class="section-title">Recargas rápidas</div>
+            <div class="section-sub">Elige un monto para prellenar la recarga rápidamente</div>
+          </div>
+        </div>
+        <div class="quick-topups" role="list" aria-label="Recargas rápidas">
+          <div class="plan-card plan-activo" role="listitem">
+            <div>
+              <h3>Activo</h3>
+              <div class="price">150.000 COP</div>
+            </div>
+            <div style="margin-top:8px;text-align:right"><button class="btn-contrast btn-sm" onclick="quickTopUp(150000,'Activo')" aria-label="Seleccionar plan Activo">Seleccionar</button></div>
+          </div>
+
+          <div class="plan-card plan-salud" role="listitem">
+            <div>
+              <h3>Salud</h3>
+              <div class="price">400.000 COP</div>
+            </div>
+            <div style="margin-top:8px;text-align:right"><button class="btn-contrast btn-sm" onclick="quickTopUp(400000,'Salud')" aria-label="Seleccionar plan Salud">Seleccionar</button></div>
+          </div>
+
+          <div class="plan-card plan-elite" role="listitem">
+            <div>
+              <h3>Elite</h3>
+              <div class="price">800.000 COP</div>
+            </div>
+            <div style="margin-top:8px;text-align:right"><button class="btn-contrast btn-sm" onclick="quickTopUp(800000,'Elite')" aria-label="Seleccionar plan Elite">Seleccionar</button></div>
+          </div>
         </div>
       </div>
 
@@ -725,6 +821,15 @@ window.claimWeeklyBonus = async () => {
   });
   const data = await r.json();
   showToast(data.success ? `¡Bono de $${data.bonusAmount} acreditado! 🎉` : data.error, data.success ? 'success' : 'warning');
+};
+
+// Quick top-up helper: prefill recharge amount and open recharge section
+window.quickTopUp = (amount, plan) => {
+  const input = document.getElementById('rechargeAmount');
+  if (input) input.value = amount;
+  showToast(`Plan ${plan} seleccionado: ${amount.toLocaleString('es-CO')} COP`, 'info');
+  showSection('recharge');
+  setTimeout(() => input?.focus(), 150);
 };
 
 window.submitTicket = async (e) => {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <link rel="icon" href="icono.png">
+    <link rel="icon" href="icono.png" />
     <title>MetaCard - Mi Cuenta</title>
     <meta
       name="description"
@@ -32,10 +32,9 @@
       }
 
       @media (max-width: 768px) {
+        
         .app-layout {
-          display: grid;
-          grid-template-columns: 280px 1fr; /* O el tamaño que tenga tu sidebar */
-          min-height: 100vh;
+          grid-template-columns: 1fr; 
         }
 
         .sidebar {
@@ -152,7 +151,7 @@
       .skeleton-label {
         height: 10px;
         width: 60px;
-        background: rgba(255,255,255,0.08);
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 4px;
         margin: 16px 16px 10px;
         animation: skeletonPulse 1.5s ease-in-out infinite;
@@ -162,21 +161,38 @@
         height: 38px;
         margin: 4px 8px;
         border-radius: 8px;
-        background: rgba(255,255,255,0.06);
+        background: rgba(255, 255, 255, 0.06);
         animation: skeletonPulse 1.5s ease-in-out infinite;
       }
 
-      .skeleton-item:nth-child(2) { animation-delay: 0.1s; }
-      .skeleton-item:nth-child(3) { animation-delay: 0.2s; }
-      .skeleton-item:nth-child(4) { animation-delay: 0.3s; }
-      .skeleton-item:nth-child(5) { animation-delay: 0.15s; }
-      .skeleton-item:nth-child(6) { animation-delay: 0.25s; }
+      .skeleton-item:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .skeleton-item:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .skeleton-item:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+      .skeleton-item:nth-child(5) {
+        animation-delay: 0.15s;
+      }
+      .skeleton-item:nth-child(6) {
+        animation-delay: 0.25s;
+      }
 
-      .sidebar-skeleton.hidden { display: none; }
+      .sidebar-skeleton.hidden {
+        display: none;
+      }
 
       @keyframes skeletonPulse {
-        0%, 100% { opacity: 0.4; }
-        50% { opacity: 0.9; }
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 0.9;
+        }
       }
 
       .sidebar-item:disabled {
@@ -185,7 +201,9 @@
       }
 
       /* keep spinner hidden - replaced by skeleton */
-      .sidebar-spinner { display: none !important; }
+      .sidebar-spinner {
+        display: none !important;
+      }
 
       /* ─────────────────────────────────────────────────────────────── */
       /* USER MENU DROPDOWN STYLES                                       */
@@ -770,8 +788,24 @@
               </linearGradient>
             </defs>
           </svg>
-          <div style="background-color: #fff; border-radius: 50%; padding: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);">
-            <img src="icono.png" alt="MetaCard" style="width: 100%; height: 100%; object-fit: contain;">
+          <div
+            style="
+              background-color: #fff;
+              border-radius: 50%;
+              padding: 4px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
+              box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);
+            "
+          >
+            <img
+              src="icono.png"
+              alt="MetaCard"
+              style="width: 100%; height: 100%; object-fit: contain"
+            />
           </div>
           <span>MetaCard</span>
         </div>
@@ -858,91 +892,92 @@
           <div class="skeleton-item"></div>
         </div>
         <!-- Real nav (hidden until roles resolved) -->
-        <div id="sidebarNav" style="display:none">
-        <div class="sidebar-section-label">Principal</div>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-dashboard"
-          onclick="goToDashboard()"
-          disabled
-        >
-          <span class="icon">🏠</span> Dashboard
-        </button>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-recharge"
-          onclick="window.location.href = 'buyer.html?section=recharge'"
-          disabled
-        >
-          <span class="icon">💳</span> Recargar saldo
-        </button>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-history"
-          onclick="window.location.href = 'buyer.html?section=history'"
-          disabled
-        >
-          <span class="icon">📋</span> Historial
-        </button>
-        <div class="sidebar-section-label buyer-only">Compras</div>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-market"
-          onclick="window.location.href = 'market.html'"
-          disabled
-        >
-          <span class="icon">🛒</span> WebMarket
-        </button>
-        <div class="sidebar-section-label">Cuenta</div>
-        <button
-          class="sidebar-item active"
-          id="nav-account"
-          onclick="navigateTo('account.html')"
-          disabled
-        >
-          <span class="icon">👤</span> Mi Cuenta
-        </button>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-card"
-          onclick="window.location.href = 'buyer.html?section=card'"
-          disabled
-        >
-          <span class="icon">📡</span> Mi tarjeta NFC
-        </button>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-benefits"
-          onclick="window.location.href = 'buyer.html?section=benefits'"
-          disabled
-        >
-          <span class="icon">⭐</span> Beneficios
-        </button>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-referrals"
-          onclick="window.location.href = 'buyer.html?section=referrals'"
-          disabled
-        >
-          <span class="icon">🤝</span> Referidos
-        </button>
-        <button
-          class="sidebar-item buyer-only"
-          id="nav-tickets"
-          onclick="window.location.href = 'buyer.html?section=tickets'"
-          disabled
-        >
-          <span class="icon">🎫</span> Soporte
-        </button>
-        <button
-          class="sidebar-item hidden"
-          id="nav-back"
-          onclick="goBackToRoleDashboard()"
-          disabled
-        >
-          <span class="icon">↩</span> Regresar
-        </button>
-        </div><!-- /sidebarNav -->
+        <div id="sidebarNav" style="display: none">
+          <div class="sidebar-section-label">Principal</div>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-dashboard"
+            onclick="goToDashboard()"
+            disabled
+          >
+            <span class="icon">🏠</span> Dashboard
+          </button>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-recharge"
+            onclick="window.location.href = 'buyer.html?section=recharge'"
+            disabled
+          >
+            <span class="icon">💳</span> Recargar saldo
+          </button>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-history"
+            onclick="window.location.href = 'buyer.html?section=history'"
+            disabled
+          >
+            <span class="icon">📋</span> Historial
+          </button>
+          <div class="sidebar-section-label buyer-only">Compras</div>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-market"
+            onclick="window.location.href = 'market.html'"
+            disabled
+          >
+            <span class="icon">🛒</span> WebMarket
+          </button>
+          <div class="sidebar-section-label">Cuenta</div>
+          <button
+            class="sidebar-item active"
+            id="nav-account"
+            onclick="navigateTo('account.html')"
+            disabled
+          >
+            <span class="icon">👤</span> Mi Cuenta
+          </button>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-card"
+            onclick="window.location.href = 'buyer.html?section=card'"
+            disabled
+          >
+            <span class="icon">📡</span> Mi tarjeta NFC
+          </button>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-benefits"
+            onclick="window.location.href = 'buyer.html?section=benefits'"
+            disabled
+          >
+            <span class="icon">⭐</span> Beneficios
+          </button>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-referrals"
+            onclick="window.location.href = 'buyer.html?section=referrals'"
+            disabled
+          >
+            <span class="icon">🤝</span> Referidos
+          </button>
+          <button
+            class="sidebar-item buyer-only"
+            id="nav-tickets"
+            onclick="window.location.href = 'buyer.html?section=tickets'"
+            disabled
+          >
+            <span class="icon">🎫</span> Soporte
+          </button>
+          <button
+            class="sidebar-item hidden"
+            id="nav-back"
+            onclick="goBackToRoleDashboard()"
+            disabled
+          >
+            <span class="icon">↩</span> Regresar
+          </button>
+        </div>
+        <!-- /sidebarNav -->
       </aside>
 
       <!-- MAIN -->
@@ -1304,7 +1339,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="assets/js/firebase-compat-config.js"></script>
     <script>
-
       let currentUser = null;
       let userData = null;
 
@@ -1469,7 +1503,6 @@
               document.getElementById("userIdValue").textContent = masked;
               window.fullIdentification = id;
             }
-
           }
         } catch (error) {
           console.error("Error loading personal data:", error);
@@ -1556,7 +1589,7 @@
             // Find the largest recharge manually since we can't orderBy+where on different fields without a composite index
             let maxAmount = 0;
             let maxDate = null;
-            rechargesSnap.docs.forEach(d => {
+            rechargesSnap.docs.forEach((d) => {
               const r = d.data();
               if ((r.amount || 0) > maxAmount) {
                 maxAmount = r.amount;
@@ -1566,7 +1599,9 @@
             document.getElementById("longestRechargeAmount").textContent =
               `$${maxAmount.toLocaleString()}`;
             document.getElementById("longestRechargeDetail").textContent =
-              maxDate && maxDate.toDate ? `El ${maxDate.toDate().toLocaleDateString("es-ES")}` : "N/A";
+              maxDate && maxDate.toDate
+                ? `El ${maxDate.toDate().toLocaleDateString("es-ES")}`
+                : "N/A";
           }
         } catch (error) {
           console.error("Error loading account summary:", error);
@@ -1647,7 +1682,10 @@
           const token = await currentUser.getIdToken();
           const response = await fetch("/users/verify-pin", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
             body: JSON.stringify({ pin: enteredPin }),
           });
 
@@ -1801,7 +1839,10 @@
           const token = await user.getIdToken();
           const response = await fetch("/users/verify-pin", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
             body: JSON.stringify({ pin: inputPin.trim() }),
           });
           const result = await response.json();
