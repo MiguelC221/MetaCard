@@ -135,6 +135,60 @@
       }
 
       /* ─────────────────────────────────────────────────────────────── */
+      /* SIDEBAR LOADING STATE                                           */
+      .sidebar.sidebar-loading {
+        position: relative;
+        pointer-events: none;
+        opacity: 0.8;
+      }
+
+      .sidebar.sidebar-loading::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 1;
+      }
+
+      .sidebar-spinner {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        z-index: 2;
+      }
+
+      .sidebar {
+        position: relative;
+      }
+
+      .sidebar.sidebar-loading::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 1;
+      }
+
+      .sidebar-item:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .sidebar-spinner.hidden {
+        display: none;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* ─────────────────────────────────────────────────────────────── */
       /* USER MENU DROPDOWN STYLES                                       */
       /* ─────────────────────────────────────────────────────────────── */
       .topbar-user-menu {
@@ -681,6 +735,7 @@
           <span>MetaCard</span>
         </div>
         <div class="topbar-right">
+          <span id="roleBadge" class="badge badge-info">Usuario</span>
           <div class="topbar-user-menu">
             <button class="topbar-user" onclick="toggleUserMenu(event)">
               <div class="topbar-avatar" id="userAvatar">👤</div>
@@ -692,7 +747,7 @@
                 <div id="menuUserName" style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">—</div>
                 <div id="menuUserEmail" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;margin-top:2px">—</div>
               </div>
-              <button class="user-menu-item" onclick="window.location.href='buyer.html'">🏠 Dashboard</button>
+              <button class="user-menu-item" onclick="goToDashboard()">🏠 Dashboard</button>
               <button class="user-menu-item" onclick="window.location.href='market.html'">🛒 WebMarket</button>
               <button class="user-menu-item" onclick="logout()">🚪 Salir</button>
             </div>
@@ -709,33 +764,38 @@
 
       <!-- SIDEBAR -->
       <aside class="sidebar" id="sidebar">
+        <div class="sidebar-spinner hidden" id="sidebarLoader"></div>
         <div class="sidebar-section-label">Principal</div>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-dashboard"
-          onclick="navigateTo('buyer.html')"
+          onclick="goToDashboard()"
+          disabled
         >
           <span class="icon">🏠</span> Dashboard
         </button>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-recharge"
           onclick="window.location.href='buyer.html?section=recharge'"
+          disabled
         >
           <span class="icon">💳</span> Recargar saldo
         </button>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-history"
           onclick="window.location.href='buyer.html?section=history'"
+          disabled
         >
           <span class="icon">📋</span> Historial
         </button>
-        <div class="sidebar-section-label">Compras</div>
+        <div class="sidebar-section-label buyer-only">Compras</div>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-market"
           onclick="window.location.href='market.html'"
+          disabled
         >
           <span class="icon">🛒</span> WebMarket
         </button>
@@ -744,36 +804,49 @@
           class="sidebar-item active"
           id="nav-account"
           onclick="navigateTo('account.html')"
+          disabled
         >
           <span class="icon">👤</span> Mi Cuenta
         </button>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-card"
           onclick="window.location.href='buyer.html?section=card'"
+          disabled
         >
           <span class="icon">📡</span> Mi tarjeta NFC
         </button>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-benefits"
           onclick="window.location.href='buyer.html?section=benefits'"
+          disabled
         >
           <span class="icon">⭐</span> Beneficios
         </button>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-referrals"
           onclick="window.location.href='buyer.html?section=referrals'"
+          disabled
         >
           <span class="icon">🤝</span> Referidos
         </button>
         <button
-          class="sidebar-item"
+          class="sidebar-item buyer-only"
           id="nav-tickets"
           onclick="window.location.href='buyer.html?section=tickets'"
+          disabled
         >
           <span class="icon">🎫</span> Soporte
+        </button>
+        <button
+          class="sidebar-item hidden"
+          id="nav-back"
+          onclick="goBackToRoleDashboard()"
+          disabled
+        >
+          <span class="icon">↩</span> Regresar
         </button>
       </aside>
 
@@ -1130,6 +1203,7 @@
           return;
         }
         currentUser = user;
+        setSidebarLoading(true);
 
         // Show name with fallback chain: displayName → email prefix → "Usuario"
         const displayName = user.displayName || "";
@@ -1137,22 +1211,34 @@
         const shortName = displayName.split(" ")[0] || emailPrefix || "Usuario";
         const topbarEl = document.getElementById("topbarName");
         topbarEl.textContent = shortName;
-        updateUserMenu(displayName || shortName, user.email);
+        updateUserMenu(displayName || shortName, user.email, 'buyer');
 
         try {
           await loadPersonalData();
           await loadAccountSummary();
+          setSidebarReady(true);
         } catch (error) {
-          console.error("Error initializing account page:", error);
+          console.error("Error initializing account página:", error);
           showToast("Error al cargar la página", "error");
+        } finally {
+          setSidebarLoading(false);
         }
       });
 
-      function updateUserMenu(name, email) {
+      function updateUserMenu(name, email, role) {
         const initial = (name || email || "U").charAt(0).toUpperCase();
         document.getElementById("userAvatar").textContent = initial;
         document.getElementById("menuUserName").textContent = name;
         document.getElementById("menuUserEmail").textContent = email;
+        setRoleBadge(role);
+      }
+
+      function setRoleBadge(role) {
+        const badge = document.getElementById("roleBadge");
+        const labels = { buyer: "Comprador", seller: "Vendedor", admin: "Administrador" };
+        const classes = { buyer: "badge-info", seller: "badge-success", admin: "badge-warning" };
+        badge.textContent = labels[role] || "Usuario";
+        badge.className = `badge ${classes[role] || 'badge-info'}`;
       }
 
       window.toggleUserMenu = (e) => {
@@ -1164,6 +1250,48 @@
         const menu = document.getElementById("userMenuDropdown");
         if (menu) menu.classList.add("hidden");
       });
+
+      window.goToDashboard = () => {
+        const role = userData?.role || 'buyer';
+        if (role === 'admin') return window.location.href = 'admin.html';
+        if (role === 'seller') return window.location.href = 'seller.html';
+        window.location.href = 'buyer.html';
+      };
+
+      window.goBackToRoleDashboard = () => {
+        const role = userData?.role || 'buyer';
+        if (role === 'admin') return window.location.href = 'admin.html';
+        if (role === 'seller') return window.location.href = 'seller.html';
+        window.location.href = 'buyer.html';
+      };
+
+      function renderRoleSidebar(role) {
+        const buyerItems = document.querySelectorAll('.buyer-only');
+        buyerItems.forEach(el => el.style.display = role === 'buyer' ? '' : 'none');
+        const backBtn = document.getElementById('nav-back');
+        if (!backBtn) return;
+        if (role === 'buyer') {
+          backBtn.classList.add('hidden');
+        } else {
+          backBtn.classList.remove('hidden');
+          backBtn.textContent = role === 'admin' ? '↩ Regresar a Administrador' : '↩ Regresar a Vendedor';
+        }
+      }
+
+      function setSidebarLoading(active) {
+        const sidebar = document.getElementById('sidebar');
+        const loader = document.getElementById('sidebarLoader');
+        if (!sidebar || !loader) return;
+        sidebar.classList.toggle('sidebar-loading', active);
+        loader.classList.toggle('hidden', !active);
+      }
+
+      function setSidebarReady(active) {
+        const buttons = document.querySelectorAll('#sidebar button.sidebar-item');
+        buttons.forEach((button) => {
+          button.disabled = !active;
+        });
+      }
 
       // Load personal data from Firestore
       async function loadPersonalData() {
@@ -1186,11 +1314,14 @@
               (data.membershipLevel) || "—";
 
             // Refresh topbar with Firestore name if richer than auth displayName
+            const role = data.role || 'buyer';
+            document.body.classList.add(`role-${role}`);
+            updateUserMenu(data.name || (currentUser.displayName || currentUser.email || 'Usuario'), data.email || currentUser.email, role);
+            renderRoleSidebar(role);
             if (data.name) {
               const fullName = data.name;
               const shortName = data.name.split(" ")[0];
               document.getElementById("topbarName").textContent = shortName;
-              updateUserMenu(fullName, data.email || currentUser.email);
             }
 
             // Populate edit form
