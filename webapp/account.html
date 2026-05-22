@@ -134,6 +134,119 @@
       }
 
       /* ─────────────────────────────────────────────────────────────── */
+      /* USER MENU DROPDOWN STYLES                                       */
+      /* ─────────────────────────────────────────────────────────────── */
+      .topbar-user-menu {
+        position: relative;
+      }
+
+      .topbar-user {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+
+      .topbar-user:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .topbar-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .topbar-user-arrow {
+        display: inline-block;
+        font-size: 12px;
+        color: var(--text-muted);
+        transition: transform 0.2s;
+      }
+
+      .topbar-user:hover .topbar-user-arrow {
+        transform: translateY(2px);
+      }
+
+      .user-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        min-width: 180px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        z-index: 200;
+      }
+
+      .user-menu.hidden {
+        display: none;
+      }
+
+      .user-menu-item {
+        width: 100%;
+        padding: 12px 14px;
+        border: none;
+        background: none;
+        color: var(--text-primary);
+        text-align: left;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background var(--transition);
+      }
+
+      .user-menu-item:hover {
+        background: rgba(99, 102, 241, 0.12);
+      }
+
+      .user-menu-item + .user-menu-item {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      @media (max-width: 768px) {
+        .user-menu {
+          min-width: 160px;
+        }
+        .topbar-user {
+          padding: 6px 10px;
+        }
+        .topbar-avatar {
+          width: 32px;
+          height: 32px;
+          font-size: 16px;
+        }
+      }
+
+      @media (max-width: 484px) {
+        .topbar-user {
+          padding: 4px 8px;
+          gap: 6px;
+        }
+        .topbar-avatar {
+          width: 28px;
+          height: 28px;
+          font-size: 14px;
+        }
+        .topbar-user-arrow {
+          display: none;
+        }
+      }
+
+      /* ─────────────────────────────────────────────────────────────── */
       /* ACCOUNT PAGE SPECIFIC STYLES                                    */
       /* ─────────────────────────────────────────────────────────────── */
       .account-container {
@@ -338,26 +451,23 @@
       }
 
       .summary-card {
-        background: linear-gradient(
-          135deg,
-          rgba(99, 102, 241, 0.1),
-          rgba(139, 92, 246, 0.1)
-        );
-        border: 1px solid rgba(99, 102, 241, 0.2);
+        background: var(--bg-card);
+        border: 1px solid var(--border);
         border-radius: var(--radius-lg);
-        padding: 28px;
-        text-align: center;
+        padding: 24px;
         transition: all var(--transition);
+        position: relative;
+        overflow: hidden;
       }
 
       .summary-card:hover {
-        border-color: rgba(99, 102, 241, 0.4);
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+        border-color: var(--primary);
+        transform: translateY(-2px);
       }
 
       .summary-card-icon {
-        font-size: 40px;
-        margin-bottom: 12px;
+        font-size: 24px;
+        margin-bottom: 8px;
       }
 
       .summary-card-value {
@@ -386,14 +496,36 @@
       /* ─────────────────────────────────────────────────────────────── */
       /* TOP PRODUCTS SECTION                                            */
       /* ─────────────────────────────────────────────────────────────── */
-      .top-products {
-        margin-bottom: 28px;
-      }
-
-      .top-products-title {
+      .account-section-title {
         font-size: 16px;
         font-weight: 700;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .product-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        text-align: center;
+        transition: all var(--transition);
+      }
+
+      .product-item:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.04);
+      }
+
+      .product-item-icon {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .product-item-name {
       }
 
       .products-list {
@@ -538,39 +670,16 @@
             id="hamburgerBtn"
             onclick="toggleMobileMenu()"
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" />
             </svg>
           </button>
-          <svg
-            viewBox="0 0 40 40"
-            fill="none"
-            style="width: 32px; height: 32px"
-          >
+          <svg viewBox="0 0 40 40" fill="none" style="width: 32px; height: 32px">
             <rect width="40" height="40" rx="12" fill="url(#tg)" />
-            <path
-              d="M8 16h24M8 20h16M8 24h20"
-              stroke="#fff"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            />
+            <path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />
             <circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9" />
             <defs>
-              <linearGradient
-                id="tg"
-                x1="0"
-                y1="0"
-                x2="40"
-                y2="40"
-                gradientUnits="userSpaceOnUse"
-              >
+              <linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
                 <stop stop-color="#6366f1" />
                 <stop offset="1" stop-color="#8b5cf6" />
               </linearGradient>
@@ -579,8 +688,22 @@
           <span>MetaCard</span>
         </div>
         <div class="topbar-right">
-          <span id="topbarName" class="text-secondary text-sm"></span>
-          <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+          <div class="topbar-user-menu">
+            <button class="topbar-user" onclick="toggleUserMenu(event)">
+              <div class="topbar-avatar" id="userAvatar">👤</div>
+              <span id="topbarName" class="text-secondary text-sm"></span>
+              <span class="topbar-user-arrow">▼</span>
+            </button>
+            <div class="user-menu hidden" id="userMenuDropdown">
+              <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08)">
+                <div id="menuUserName" style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">—</div>
+                <div id="menuUserEmail" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;margin-top:2px">—</div>
+              </div>
+              <button class="user-menu-item" onclick="window.location.href='buyer.html'">🏠 Dashboard</button>
+              <button class="user-menu-item" onclick="window.location.href='market.html'">🛒 WebMarket</button>
+              <button class="user-menu-item" onclick="logout()">🚪 Salir</button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -604,14 +727,14 @@
         <button
           class="sidebar-item"
           id="nav-recharge"
-          onclick="navigateTo('buyer.html#recharge')"
+          onclick="window.location.href='buyer.html?section=recharge'"
         >
           <span class="icon">💳</span> Recargar saldo
         </button>
         <button
           class="sidebar-item"
           id="nav-history"
-          onclick="navigateTo('buyer.html#history')"
+          onclick="window.location.href='buyer.html?section=history'"
         >
           <span class="icon">📋</span> Historial
         </button>
@@ -619,7 +742,7 @@
         <button
           class="sidebar-item"
           id="nav-market"
-          onclick="window.location.href = 'market.html'"
+          onclick="window.location.href='market.html'"
         >
           <span class="icon">🛒</span> WebMarket
         </button>
@@ -634,28 +757,28 @@
         <button
           class="sidebar-item"
           id="nav-card"
-          onclick="navigateTo('buyer.html#card')"
+          onclick="window.location.href='buyer.html?section=card'"
         >
           <span class="icon">📡</span> Mi tarjeta NFC
         </button>
         <button
           class="sidebar-item"
           id="nav-benefits"
-          onclick="navigateTo('buyer.html#benefits')"
+          onclick="window.location.href='buyer.html?section=benefits'"
         >
           <span class="icon">⭐</span> Beneficios
         </button>
         <button
           class="sidebar-item"
           id="nav-referrals"
-          onclick="navigateTo('buyer.html#referrals')"
+          onclick="window.location.href='buyer.html?section=referrals'"
         >
           <span class="icon">🤝</span> Referidos
         </button>
         <button
           class="sidebar-item"
           id="nav-tickets"
-          onclick="navigateTo('buyer.html#tickets')"
+          onclick="window.location.href='buyer.html?section=tickets'"
         >
           <span class="icon">🎫</span> Soporte
         </button>
@@ -666,7 +789,7 @@
         <div class="account-container">
           <!-- Page Header -->
           <div class="page-header">
-            <h1>Mi Cuenta 👤</h1>
+            <h1>Configuración de Cuenta</h1>
             <p>Visualiza y gestiona la información de tu cuenta MetaCard</p>
           </div>
 
@@ -709,31 +832,24 @@
                 <div class="personal-data-section">
                   <!-- Nombres -->
                   <div class="data-field">
-                    <label>Nombres</label>
-                    <div class="data-display" id="namesDisplay">—</div>
-                  </div>
-
-                  <!-- Apellidos -->
-                  <div class="data-field">
-                    <label>Apellidos</label>
-                    <div class="data-display" id="lastnamesDisplay">—</div>
+                    <label>Nombre Completo</label>
+                    <div class="data-display" id="fullNameDisplay">—</div>
                   </div>
 
                   <!-- Identificación (requiere PIN) -->
                   <div class="data-field">
-                    <label>Identificación (Documento)</label>
-                    <div class="secure-field-wrapper">
-                      <div class="data-display masked" id="idDisplay">
-                        •••••••••••
-                      </div>
+                    <label>Número de identificación</label>
+                    <div class="flex items-center gap-3 mt-1.5">
+                      <span id="userIdValue" class="font-mono text-[1.1rem] font-semibold tracking-[1px] text-slate-200">
+                        ••••••••••
+                      </span>
+                      <button
+                        type="button"
+                        id="revealIdBtn"
+                        class="btn btn-ghost btn-sm flex items-center gap-1"
+                        onclick="handleRevealIdentification()"
+                      >🔑 Revelar</button>
                     </div>
-                    <button
-                      class="btn btn-ghost btn-sm"
-                      style="justify-content: flex-start; padding: 6px 0"
-                      onclick="showPinModal()"
-                    >
-                      🔐 Mostrar documento (requiere PIN)
-                    </button>
                   </div>
 
                   <!-- Email -->
@@ -756,24 +872,12 @@
                 </div>
 
                 <!-- Password change section -->
-                <div
-                  style="
-                    margin-top: 28px;
-                    padding-top: 28px;
-                    border-top: 1px solid var(--border);
-                  "
-                >
-                  <h3
-                    style="
-                      font-size: 14px;
-                      font-weight: 600;
-                      margin-bottom: 16px;
-                    "
-                  >
+                <div style="margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--border);">
+                  <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">
                     Seguridad
                   </h3>
-                  <button
-                    class="btn btn-secondary"
+                  <button 
+                    class="btn btn-secondary btn-sm" 
                     onclick="showChangePasswordModal()"
                   >
                     🔐 Cambiar contraseña
@@ -791,19 +895,10 @@
                 >
                   <div class="personal-data-section">
                     <div class="data-field">
-                      <label for="editNames">Nombres</label>
+                      <label for="editFullName">Nombre Completo</label>
                       <input
                         type="text"
-                        id="editNames"
-                        placeholder="Ingresa tus nombres"
-                        required
-                      />
-                    </div>
-                    <div class="data-field">
-                      <label for="editLastnames">Apellidos</label>
-                      <input
-                        type="text"
-                        id="editLastnames"
+                        id="editFullName"
                         placeholder="Ingresa tus apellidos"
                         required
                       />
@@ -891,7 +986,7 @@
 
             <!-- Top Products Section -->
             <div class="top-products">
-              <h3 class="top-products-title">📈 Tus categorías favoritas</h3>
+              <h3 class="account-section-title">📈 Categorías favoritas</h3>
               <div class="products-list" id="topProductsList">
                 <div class="product-item">
                   <div
@@ -1060,7 +1155,7 @@
         const shortName = displayName.split(" ")[0] || emailPrefix || "Usuario";
         const topbarEl = document.getElementById("topbarName");
         topbarEl.textContent = shortName;
-        topbarEl.style.display = ""; // make visible (was unstyled before)
+        updateUserMenu(displayName || shortName, user.email);
 
         try {
           await loadPersonalData();
@@ -1071,41 +1166,53 @@
         }
       });
 
+      function updateUserMenu(name, email) {
+        const initial = (name || email || "U").charAt(0).toUpperCase();
+        document.getElementById("userAvatar").textContent = initial;
+        document.getElementById("menuUserName").textContent = name;
+        document.getElementById("menuUserEmail").textContent = email;
+      }
+
+      window.toggleUserMenu = (e) => {
+        e.stopPropagation();
+        document.getElementById("userMenuDropdown").classList.toggle("hidden");
+      };
+
+      document.addEventListener("click", () => {
+        const menu = document.getElementById("userMenuDropdown");
+        if (menu) menu.classList.add("hidden");
+      });
+
       // Load personal data from Firestore
       async function loadPersonalData() {
         try {
-          const db = firebase.firestore();
           const userDoc = await db
             .collection("users")
             .doc(currentUser.uid)
             .get();
 
           if (userDoc.exists) {
-            const data = userDoc.data();
-            document.getElementById("namesDisplay").textContent =
-              data.nombres || "—";
-            document.getElementById("lastnamesDisplay").textContent =
-              data.apellidos || "—";
+            userData = userDoc.data();
+            const data = userData;
+            document.getElementById("fullNameDisplay").textContent =
+              data.name || "—";
             document.getElementById("emailDisplay").textContent =
               data.email || currentUser.email || "—";
             document.getElementById("phoneDisplay").textContent =
               data.telefono || "—";
             document.getElementById("membershipDisplay").textContent =
-              (data.membresia && data.membresia.nivel) || "—";
+              (data.membershipLevel) || "—";
 
             // Refresh topbar with Firestore name if richer than auth displayName
-            if (data.nombres) {
-              const fullName = [data.nombres, data.apellidos]
-                .filter(Boolean)
-                .join(" ");
-              const shortName = data.nombres.split(" ")[0];
+            if (data.name) {
+              const fullName = data.name;
+              const shortName = data.name.split(" ")[0];
               document.getElementById("topbarName").textContent = shortName;
+              updateUserMenu(fullName, data.email || currentUser.email);
             }
 
             // Populate edit form
-            document.getElementById("editNames").value = data.nombres || "";
-            document.getElementById("editLastnames").value =
-              data.apellidos || "";
+            document.getElementById("editFullName").value = data.name || "";
             document.getElementById("editPhone").value = data.telefono || "";
 
             // Store ID for PIN verification
@@ -1113,7 +1220,7 @@
               const id = data.identificacion.toString();
               const masked =
                 "•".repeat(Math.max(0, id.length - 4)) + id.slice(-4);
-              document.getElementById("idDisplay").textContent = masked;
+              document.getElementById("userIdValue").textContent = masked;
               window.fullIdentification = id;
             }
 
@@ -1128,8 +1235,6 @@
       // Load account summary data
       async function loadAccountSummary() {
         try {
-          const db = firebase.firestore();
-
           // Get transactions count
           const transactionsSnap = await db
             .collection("transactions")
@@ -1183,12 +1288,8 @@
           }
 
           // Get account creation date
-          const userDoc = await db
-            .collection("users")
-            .doc(currentUser.uid)
-            .get();
-          if (userDoc.exists && userDoc.data().createdAt) {
-            const createdDate = userDoc.data().createdAt.toDate();
+          if (userData && userData.createdAt) {
+            const createdDate = userData.createdAt.toDate();
             const now = new Date();
             const ageInDays = Math.floor(
               (now - createdDate) / (1000 * 60 * 60 * 24),
@@ -1256,13 +1357,11 @@
       async function submitPersonalDataEdit(event) {
         event.preventDefault();
         try {
-          const db = firebase.firestore();
           await db
             .collection("users")
             .doc(currentUser.uid)
             .update({
-              nombres: document.getElementById("editNames").value,
-              apellidos: document.getElementById("editLastnames").value,
+              name: document.getElementById("editFullName").value,
               telefono: document.getElementById("editPhone").value,
             });
 
@@ -1303,9 +1402,9 @@
 
           if (result.success) {
             // Show full ID
-            document.getElementById("idDisplay").textContent =
+            document.getElementById("userIdValue").textContent =
               window.fullIdentification ||
-              document.getElementById("idDisplay").textContent;
+              document.getElementById("userIdValue").textContent;
             closePinModal();
             showToast("PIN verificado correctamente", "success");
           } else {
@@ -1388,10 +1487,7 @@
 
       // Logout function
       function logout() {
-        firebase
-          .auth()
-          .signOut()
-          .then(() => {
+        auth.signOut().then(() => {
             window.location.href = "login.html";
           });
       }
@@ -1404,6 +1500,111 @@
         toast.textContent = message;
         container.appendChild(toast);
         setTimeout(() => toast.remove(), 4000);
+      }
+
+      // Variables de control para la identificación
+      let idVisible = false;
+      let cachedIdentification = null; // Guarda la identificación en memoria tras verificar el PIN
+
+      async function handleRevealIdentification() {
+        const idSpan = document.getElementById("userIdValue");
+        const revealBtn = document.getElementById("revealIdBtn");
+        const user = auth.currentUser;
+
+        if (!user) {
+          showToast("Sesión no válida.", "error");
+          return;
+        }
+
+        // SI YA ESTÁ VISIBLE -> SIMPLEMENTE VOLVER A OCULTAR
+        if (idVisible) {
+          idSpan.textContent = "•••••••••";
+          revealBtn.textContent = "🔑 Revelar";
+          idVisible = false;
+          return;
+        }
+
+        // SI YA SE HABÍA VALIDADO EL PIN EN ESTA SESIÓN -> MOSTRAR DIRECTAMENTE
+        if (cachedIdentification) {
+          idSpan.textContent = cachedIdentification;
+          revealBtn.textContent = "🙈 Ocultar";
+          idVisible = true;
+          return;
+        }
+
+        // SOLICITAR EL PIN PRIVADO AL USUARIO
+        const inputPin = prompt(
+          "Por seguridad, introduce tu PIN PRIVADO para revelar la identificación:",
+        );
+
+        // Si cancela o lo deja vacío, no hace nada
+        if (inputPin === null || inputPin.trim() === "") return;
+
+        // Bloquear botón temporalmente durante la verificación
+        revealBtn.disabled = true;
+        revealBtn.textContent = "⏳ Verificando...";
+
+        try {
+          // 1. Ir a Firestore a buscar la tarjeta del usuario para verificar su PIN
+          const cardSnap = await db
+            .collection("cards")
+            .where("userId", "==", user.uid)
+            .limit(1)
+            .get();
+
+          if (cardSnap.empty) {
+            showToast(
+              "No tienes ninguna MetaCard vinculada a tu cuenta.",
+              "warning",
+            );
+            revealBtn.disabled = false;
+            revealBtn.textContent = "🔑 Revelar";
+            return;
+          }
+
+          const cardData = cardSnap.docs[0].data();
+          const correctPin = cardData.pin || "0000";
+
+          // 2. Comprobar si el PIN introducido coincide con el de buyer.html
+          if (inputPin.trim() !== correctPin.toString().trim()) {
+            showToast("PIN Incorrecto. Acceso denegado.", "error");
+            revealBtn.disabled = false;
+            revealBtn.textContent = "🔑 Revelar";
+            return;
+          }
+
+          // 3. ¡PIN CORRECTO! Ahora traemos la identificación real desde la colección 'users'
+          const userDoc = await db
+            .collection("users")
+            .doc(user.uid)
+            .get();
+
+          if (userDoc.exists) {
+            // Extraemos el campo 'identification' tal como se guardó en el registro
+            const userData = userDoc.data();
+            cachedIdentification = userData.identification || "No registrada";
+
+            // Mostrar la información en pantalla
+            idSpan.textContent = cachedIdentification;
+            revealBtn.textContent = "🙈 Ocultar";
+            idVisible = true;
+            showToast("Identificación revelada correctamente.", "success");
+          } else {
+            showToast(
+              "No se encontraron datos de perfil del usuario.",
+              "error",
+            );
+            idSpan.textContent = "Error de datos";
+          }
+        } catch (error) {
+          console.error("Error en el proceso de revelación:", error);
+          showToast("Error al conectar con la base de datos.", "error");
+        } finally {
+          revealBtn.disabled = false;
+          if (!idVisible && !cachedIdentification) {
+            revealBtn.textContent = "🔑 Revelar";
+          }
+        }
       }
     </script>
   </body>
