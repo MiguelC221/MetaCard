@@ -20,6 +20,7 @@ const marketRouter        = require('./routes/market');
 const ticketsRouter       = require('./routes/tickets');
 const conveniosRouter     = require('./routes/convenios');
 const cineRouter          = require('./routes/cine');
+const settingsRouter      = require('./routes/settings');
 
 const app = express();
 
@@ -66,10 +67,21 @@ app.use('/market',        marketRouter);
 app.use('/tickets',       ticketsRouter);
 app.use('/convenios',     conveniosRouter);
 app.use('/cine',          cineRouter);
+app.use('/settings',      settingsRouter);
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'MetaCard API', timestamp: new Date().toISOString() });
+});
+
+// ── favicon.ico fallback ─────────────────────────────────────────────────────
+app.get('/favicon.ico', (_req, res) => {
+  const icoPath = path.join(webappPath, 'favicon.ico');
+  const pngPath = path.join(webappPath, 'icono.png');
+  const fs = require('fs');
+  if (fs.existsSync(icoPath)) return res.sendFile(icoPath);
+  if (fs.existsSync(pngPath)) return res.type('image/png').sendFile(pngPath);
+  res.status(204).end();
 });
 
 // ── SPA fallback: rutas de navegación van a la webapp ───────────────────────
@@ -90,7 +102,7 @@ app.use((err, _req, res, _next) => {
 
 // ── Iniciar servidor ────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 MetaCard corriendo en http://localhost:${PORT}`);
   console.log(`   Webapp:   http://localhost:${PORT}/login.html`);
   console.log(`   API:      http://localhost:${PORT}/health`);
