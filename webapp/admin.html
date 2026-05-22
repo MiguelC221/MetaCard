@@ -37,16 +37,43 @@
 <div class="modal-overlay hidden" id="notifModal">
   <div class="modal">
     <div class="modal-header"><span class="modal-title">Enviar notificación</span><button class="modal-close" onclick="closeModal('notifModal')">✕</button></div>
-    <div class="form-group mb-3"><label>Usuario ID</label><input type="text" id="notifUserId" placeholder="UID del usuario"/></div>
-    <div class="form-group mb-3"><label>Título</label><input type="text" id="notifTitle" placeholder="Título de la notificación"/></div>
-    <div class="form-group mb-4"><label>Mensaje</label><textarea id="notifBody" rows="3" style="resize:vertical"></textarea></div>
-    <button class="btn btn-primary btn-full" onclick="sendNotif()">Enviar FCM</button>
+  </div>
+</div>
+<!-- Modal rechazo recarga -->
+<div class="modal-overlay hidden" id="rejectModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><span class="modal-title">Rechazar recarga</span><button class="modal-close" onclick="closeModal('rejectModal')">✕</button></div>
+    <div class="form-group mb-4"><label for="rejectReason">Motivo del rechazo</label><input type="text" id="rejectReason" placeholder="Ej: Comprobante inválido" autofocus/></div>
+    <button class="btn btn-danger btn-full" onclick="confirmRejectRecharge()">Confirmar Rechazo</button>
   </div>
 </div>
 
-<!-- Modal ticket detalle + respuesta -->
+<!-- Modal Convenio -->
+<div class="modal-overlay hidden" id="convenioModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><span class="modal-title" id="convenioModalTitle">Nuevo Convenio</span><button class="modal-close" onclick="closeModal('convenioModal')">✕</button></div>
+    <form id="convenioForm" onsubmit="saveConvenio(event)">
+      <div class="form-group mb-3"><label>Empresa Aliada</label><input type="text" id="convName" required placeholder="Ej: Cine Colombia"/></div>
+      <div class="grid-2 mb-3" style="gap:12px">
+        <div class="form-group"><label>Dominio de Correo</label><input type="text" id="convDomain" required placeholder="Ej: cinecolombia.com"/></div>
+        <div class="form-group"><label>Estado</label><select id="convStatus"><option value="active">Activo</option><option value="inactive">Inactivo</option></select></div>
+      </div>
+      <div class="grid-2 mb-3" style="gap:12px">
+        <div class="form-group"><label>Descuento Productos (%)</label><input type="number" id="convDescProd" value="0" min="0" max="100"/></div>
+        <div class="form-group"><label>Descuento Servicios (%)</label><input type="number" id="convDescServ" value="0" min="0" max="100"/></div>
+      </div>
+      <div class="mb-3"><span class="text-xs text-secondary mb-1 block">Contacto</span>
+        <div class="grid-2" style="gap:12px"><input type="email" id="convEmail" placeholder="Correo corporativo" class="form-group"/><input type="text" id="convPhone" placeholder="Teléfono" class="form-group"/></div>
+      </div>
+      <div class="form-group mb-4"><label>Descripción del convenio</label><textarea id="convDesc" rows="2" placeholder="Beneficios acordados..."></textarea></div>
+      <button type="submit" class="btn btn-primary btn-full" id="convSubmitBtn">💾 Guardar Convenio</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Ticket detalle -->
 <div class="modal-overlay hidden" id="ticketModal">
-  <div class="modal" style="max-width:520px">
+  <div class="modal" style="max-width:500px">
     <div class="modal-header"><span class="modal-title">Ticket de soporte</span><button class="modal-close" onclick="closeModal('ticketModal')">✕</button></div>
     <div class="mb-3"><span class="text-xs text-muted">Asunto</span><div class="font-bold mt-1" id="tktSubject"></div></div>
     <div class="mb-3"><span class="text-xs text-muted">Usuario</span><div class="text-sm text-secondary mt-1" id="tktUser"></div></div>
@@ -89,7 +116,9 @@
   <header class="topbar">
     <div class="topbar-logo">
       <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open')">☰</button>
-      <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#ag)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="ag" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+      <div style="background-color: #fff; border-radius: 50%; padding: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);">
+        <img src="icono.png" alt="MetaCard" style="width: 100%; height: 100%; object-fit: contain;">
+      </div>
       <span>MetaCard Admin</span>
     </div>
     <div class="topbar-right">
@@ -105,11 +134,12 @@
     <button class="sidebar-item"        id="nav-recharges"  onclick="showSection('recharges')">  <span class="icon">💳</span> Recargas</button>
     <button class="sidebar-item"        id="nav-cards"      onclick="showSection('cards')">      <span class="icon">📡</span> Tarjetas</button>
     <button class="sidebar-item"        id="nav-txs"        onclick="showSection('txs')">        <span class="icon">📋</span> Transacciones</button>
-    <div class="sidebar-section-label">Plataforma</div>
     <button class="sidebar-item"        id="nav-tickets"    onclick="showSection('tickets')">    <span class="icon">🎫</span> Tickets</button>
     <button class="sidebar-item"        id="nav-products"   onclick="showSection('products')">   <span class="icon">🛍️</span> Productos</button>
     <button class="sidebar-item"        id="nav-convenios"  onclick="showSection('convenios')">  <span class="icon">🤝</span> Convenios</button>
     <button class="sidebar-item"        id="nav-notify"     onclick="showSection('notify')">     <span class="icon">🔔</span> Notificaciones</button>
+    <div class="sidebar-section-label">Configuración</div>
+    <button class="sidebar-item"        id="nav-settings"   onclick="showSection('settings')">   <span class="icon">⚙️</span> Ajustes Generales</button>
   </aside>
 
   <main class="main-content">
@@ -324,6 +354,48 @@
     </section>
 
 
+    <!-- ── CONFIGURACIÓN ── -->
+    <section id="section-settings" class="hidden">
+      <div class="page-header">
+        <h1>Ajustes Generales</h1>
+        <p>Configura parámetros globales de la plataforma MetaCard.</p>
+      </div>
+
+      <div class="card" style="max-width:600px">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Configuración 2×1 en Cine</h2>
+        <p class="text-sm text-secondary mb-4">Selecciona los días de la semana en los que aplica la promoción de 2×1 en boletas de cine.</p>
+        
+        <form id="cinemaPromoForm" onsubmit="saveCinemaPromoDays(event)">
+          <div class="grid-2" style="gap:12px; margin-bottom: 24px;">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="1" /> Lunes
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="2" /> Martes
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="3" /> Miércoles
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="4" /> Jueves
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="5" /> Viernes
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="6" /> Sábado
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="promoDays" value="0" /> Domingo
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            💾 Guardar configuración
+          </button>
+        </form>
+      </div>
+    </section>
+
     <!-- Créditos -->
     <footer style="margin-top:40px;padding:16px 0 4px;border-top:1px solid var(--border);text-align:center;color:var(--text-muted);font-size:11px;letter-spacing:0.3px">
       💳 MetaCard © 2026 &nbsp;·&nbsp; Desarrollado por &nbsp;👨‍💻&nbsp;
@@ -336,7 +408,7 @@
 import { auth, db, BACKEND_URL }                                    from './assets/js/firebase-config.js';
 import { onAuthStateChanged, signOut }                              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { collection, getDocs, getDoc, query, where, orderBy,
-         limit, updateDoc, doc }                                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         limit, updateDoc, doc, setDoc }                            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 let currentUser   = null;
 let allUsers      = [];
@@ -853,6 +925,52 @@ window.deleteConvenio = async (cId) => {
   }
 };
 
+/* ─── CONFIGURACIÓN CINE 2X1 ─── */
+async function loadCinemaPromoDays() {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'cinema2x1'));
+    if (snap.exists()) {
+      const data = snap.data();
+      const days = data.promoDays || [4]; // Default to Thursday (4)
+      
+      const checkboxes = document.querySelectorAll('input[name="promoDays"]');
+      checkboxes.forEach(cb => {
+        cb.checked = days.includes(Number(cb.value));
+      });
+    } else {
+      // Create default if it doesn't exist
+      await setDoc(doc(db, 'settings', 'cinema2x1'), { promoDays: [4] });
+      document.querySelector('input[name="promoDays"][value="4"]').checked = true;
+    }
+  } catch (err) {
+    console.error('Error loading cinema promo config:', err);
+  }
+}
+
+window.saveCinemaPromoDays = async (event) => {
+  event.preventDefault();
+  const checkboxes = document.querySelectorAll('input[name="promoDays"]:checked');
+  const promoDays = Array.from(checkboxes).map(cb => Number(cb.value));
+  
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${BACKEND_URL}/settings/cinema2x1`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ promoDays })
+    });
+    
+    if (!res.ok) {
+      // Fallback for direct Firestore update if backend endpoint doesn't exist
+      await setDoc(doc(db, 'settings', 'cinema2x1'), { promoDays, updatedAt: new Date() }, { merge: true });
+    }
+    
+    showToast('Configuración 2×1 actualizada ✓', 'success');
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+};
+
 function updateStats() {}
 
 window.notifyUser = (uid) => {
@@ -880,6 +998,10 @@ window.showSection = (name) => {
   document.getElementById(`section-${name}`)?.classList.remove('hidden');
   document.getElementById(`nav-${name}`)?.classList.add('active');
   localStorage.setItem('adminSection', name);  // guardar posición
+  
+  if (name === 'settings') {
+    loadCinemaPromoDays();
+  }
 };
 
 // (closeModal ya definido arriba — no redefinir aquí)

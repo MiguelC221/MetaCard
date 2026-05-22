@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <link rel="icon" href="icono.png">
   <title>MetaCard — WebMarket</title>
   <meta name="description" content="Catálogo de productos y servicios del WebMarket MetaCard. Compra fácil con tu tarjeta y código privado."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -284,7 +285,9 @@
   <header class="topbar">
     <div class="topbar-logo">
       <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open')">☰</button>
-      <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="url(#tg)"/><path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9"/><defs><linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+      <div style="background-color: #fff; border-radius: 50%; padding: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);">
+        <img src="icono.png" alt="MetaCard" style="width: 100%; height: 100%; object-fit: contain;">
+      </div>
       <span>MetaCard Market</span>
     </div>
     <div class="topbar-right" id="topbarRight">
@@ -374,10 +377,22 @@ let activeFilter      = 'all';
 let selectedProductId = null;
 let authReady     = false;
 let userCardId    = null;  // Card ID auto-filled for logged-in users
+let promoDays     = [4]; // default Thursday
 
-// ── Detect if today is Thursday (2x1 cinema day) ─────────────────────
-function isThursday() {
-  return new Date().getDay() === 4; // 0=Sun, 4=Thu
+// ── Load 2x1 cinema days ─────────────────────
+async function loadCinemaSettings() {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'cinema2x1'));
+    if (snap.exists()) {
+      promoDays = snap.data().promoDays || [4];
+    }
+  } catch(e) {
+    console.warn('[Market] Error loading settings:', e);
+  }
+}
+
+function isCinemaPromoDay() {
+  return promoDays.includes(new Date().getDay());
 }
 
 // ── Auth: no obligatorio — pero detectamos si hay sesión ──────────────
@@ -417,12 +432,19 @@ onAuthStateChanged(auth, async user => {
       <a href="login.html" class="btn btn-primary btn-sm">🔑 Iniciar sesión</a>`;
   }
 
-  // Show Thursday banner if applicable
-  if (isThursday()) {
-    document.getElementById('thursdayBanner').classList.remove('hidden');
-  }
-
   // Cargar catálogo siempre (es público)
+  await loadCinemaSettings();
+  
+  // Show Thursday banner if applicable
+  if (isCinemaPromoDay()) {
+    document.getElementById('thursdayBanner').classList.remove('hidden');
+    // Actualizar texto del banner si no es jueves
+    if (!promoDays.includes(4) || promoDays.length > 1) {
+      const text = document.querySelector('#thursdayBanner .banner-text');
+      if (text) text.innerHTML = `🍿 <strong>¡Hoy es día de Cine 2×1!</strong> Compra dos boletas y paga solo una.`;
+    }
+  }
+  
   loadCatalog();
 
   // "Mis compras" solo si hay sesión
@@ -544,10 +566,14 @@ window.openBuyModal = (productId) => {
   document.getElementById('buyModalStock').textContent = p.type === 'service' || p.type === 'cinema' ? 'Disponible' : `${p.stock} en stock`;
 
   // Thursday 2x1 promo for cinema in modal
-  const is2x1 = isThursday() && p.type === 'cinema';
+  const is2x1 = isCinemaPromoDay() && p.type === 'cinema';
   const modal2x1 = document.getElementById('buyModal2x1Notice');
   if (is2x1) {
     modal2x1.classList.remove('hidden');
+    // Actualizar el texto del modal si no es solo los jueves
+    if (!promoDays.includes(4) || promoDays.length > 1) {
+      modal2x1.innerHTML = '🍿 ¡Día de Cine 2×1 aplicado! Paga 1 lleva 2';
+    }
     document.getElementById('buyModalPrice').innerHTML = `<span class="price-original">${fmt(p.price)}</span> <span class="price-promo">${fmt(Math.ceil(p.price / 2))}/boleta</span>`;
   } else {
     modal2x1.classList.add('hidden');
@@ -674,7 +700,7 @@ window.confirmPurchase = async () => {
         productId: selectedProductId, 
         quantity,
         selectedSeats: window.selectedCinemaSeats || [],
-        applyThursday2x1: isThursday()
+        applyThursday2x1: isCinemaPromoDay()
       }),
     });
     const data = await res.json();

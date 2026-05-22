@@ -5,8 +5,10 @@ service cloud.firestore {
     // ── Helpers ─────────────────────────────────────────────────────────────
     function isAuth() { return request.auth != null; }
     function isOwner(uid) { return request.auth.uid == uid; }
-    function getUserData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
-    function hasRole(role) { return getUserData().role == role; }
+    function hasRole(role) { 
+      let userRef = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userRef) && get(userRef).data.get('role', '') == role; 
+    }
     function isAdmin() { return isAuth() && hasRole('admin'); }
     function isSeller() { return isAuth() && (hasRole('seller') || hasRole('admin')); }
 
@@ -89,6 +91,19 @@ service cloud.firestore {
       );
       allow create: if isAuth();
       allow update: if isAdmin();
+    }
+    
+    // ── Recharges ────────────────────────────────────────────────────────────
+    match /rechargeRequests/{requestId} {
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+    
+    // ── Settings ─────────────────────────────────────────────────────────────
+    match /settings/{settingId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
     }
   }
 }

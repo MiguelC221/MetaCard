@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>MetaCard — Mi Cuenta</title>
+    <link rel="icon" href="icono.png">
+    <title>MetaCard - Mi Cuenta</title>
     <meta
       name="description"
       content="Datos personales, resumen de cuenta y estadísticas de MetaCard."
@@ -674,17 +675,9 @@
               <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" />
             </svg>
           </button>
-          <svg viewBox="0 0 40 40" fill="none" style="width: 32px; height: 32px">
-            <rect width="40" height="40" rx="12" fill="url(#tg)" />
-            <path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />
-            <circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9" />
-            <defs>
-              <linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#6366f1" />
-                <stop offset="1" stop-color="#8b5cf6" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <div style="background-color: #fff; border-radius: 50%; padding: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);">
+            <img src="icono.png" alt="MetaCard" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
           <span>MetaCard</span>
         </div>
         <div class="topbar-right">
@@ -1124,19 +1117,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="assets/js/firebase-compat-config.js"></script>
     <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyB5IzAXms4cbjOst4ER9FufMgWCj00NnDA",
-        authDomain: "metacard-2026f.firebaseapp.com",
-        projectId: "metacard-2026f",
-        storageBucket: "metacard-2026f.firebasestorage.app",
-        messagingSenderId: "713521444873",
-        appId: "1:713521444873:web:261ebc5117cb9a779e20d8",
-      };
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-      const BACKEND_URL = window.location.origin;
 
       let currentUser = null;
       let userData = null;
@@ -1224,7 +1206,6 @@
               window.fullIdentification = id;
             }
 
-            userPin = data.pinSecreto || null;
           }
         } catch (error) {
           console.error("Error loading personal data:", error);
@@ -1238,7 +1219,7 @@
           // Get transactions count
           const transactionsSnap = await db
             .collection("transactions")
-            .where("userId", "==", currentUser.uid)
+            .where("buyerId", "==", currentUser.uid)
             .get();
           const totalTx = transactionsSnap.size;
           document.getElementById("totalTransactions").textContent = totalTx;
@@ -1301,19 +1282,27 @@
 
           // Get longest recharge
           const rechargesSnap = await db
-            .collection("recharges")
+            .collection("rechargeRequests")
             .where("userId", "==", currentUser.uid)
             .where("status", "==", "approved")
-            .orderBy("amount", "desc")
-            .limit(1)
+            .limit(20)
             .get();
 
           if (!rechargesSnap.empty) {
-            const longestRecharge = rechargesSnap.docs[0].data();
+            // Find the largest recharge manually since we can't orderBy+where on different fields without a composite index
+            let maxAmount = 0;
+            let maxDate = null;
+            rechargesSnap.docs.forEach(d => {
+              const r = d.data();
+              if ((r.amount || 0) > maxAmount) {
+                maxAmount = r.amount;
+                maxDate = r.approvedAt || r.requestedAt || null;
+              }
+            });
             document.getElementById("longestRechargeAmount").textContent =
-              `$${longestRecharge.amount.toLocaleString()}`;
+              `$${maxAmount.toLocaleString()}`;
             document.getElementById("longestRechargeDetail").textContent =
-              `El ${longestRecharge.approvedAt ? new Date(longestRecharge.approvedAt.toDate()).toLocaleDateString("es-ES") : "N/A"}`;
+              maxDate && maxDate.toDate ? `El ${maxDate.toDate().toLocaleDateString("es-ES")}` : "N/A";
           }
         } catch (error) {
           console.error("Error loading account summary:", error);
@@ -1391,17 +1380,16 @@
         const errorDiv = document.getElementById("pinError");
 
         try {
-          // Verify PIN (call backend function)
-          const response = await fetch("/api/verify-pin", {
+          const token = await currentUser.getIdToken();
+          const response = await fetch("/users/verify-pin", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUser.uid, pin: enteredPin }),
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ pin: enteredPin }),
           });
 
           const result = await response.json();
 
           if (result.success) {
-            // Show full ID
             document.getElementById("userIdValue").textContent =
               window.fullIdentification ||
               document.getElementById("userIdValue").textContent;
@@ -1532,9 +1520,9 @@
           return;
         }
 
-        // SOLICITAR EL PIN PRIVADO AL USUARIO
+        // SOLICITAR EL PIN PRIVADO (de pagos) AL USUARIO
         const inputPin = prompt(
-          "Por seguridad, introduce tu PIN PRIVADO para revelar la identificación:",
+          "Por seguridad, introduce tu PIN de pagos (Código Privado) para revelar la identificación:",
         );
 
         // Si cancela o lo deja vacío, no hace nada
@@ -1545,57 +1533,28 @@
         revealBtn.textContent = "⏳ Verificando...";
 
         try {
-          // 1. Ir a Firestore a buscar la tarjeta del usuario para verificar su PIN
-          const cardSnap = await db
-            .collection("cards")
-            .where("userId", "==", user.uid)
-            .limit(1)
-            .get();
+          // Verificar PIN contra el backend (usa bcrypt contra privateCodeHash)
+          const token = await user.getIdToken();
+          const response = await fetch("/users/verify-pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ pin: inputPin.trim() }),
+          });
+          const result = await response.json();
 
-          if (cardSnap.empty) {
-            showToast(
-              "No tienes ninguna MetaCard vinculada a tu cuenta.",
-              "warning",
-            );
+          if (!result.success) {
+            showToast("PIN incorrecto. Acceso denegado.", "error");
             revealBtn.disabled = false;
             revealBtn.textContent = "🔑 Revelar";
             return;
           }
 
-          const cardData = cardSnap.docs[0].data();
-          const correctPin = cardData.pin || "0000";
-
-          // 2. Comprobar si el PIN introducido coincide con el de buyer.html
-          if (inputPin.trim() !== correctPin.toString().trim()) {
-            showToast("PIN Incorrecto. Acceso denegado.", "error");
-            revealBtn.disabled = false;
-            revealBtn.textContent = "🔑 Revelar";
-            return;
-          }
-
-          // 3. ¡PIN CORRECTO! Ahora traemos la identificación real desde la colección 'users'
-          const userDoc = await db
-            .collection("users")
-            .doc(user.uid)
-            .get();
-
-          if (userDoc.exists) {
-            // Extraemos el campo 'identification' tal como se guardó en el registro
-            const userData = userDoc.data();
-            cachedIdentification = userData.identification || "No registrada";
-
-            // Mostrar la información en pantalla
-            idSpan.textContent = cachedIdentification;
-            revealBtn.textContent = "🙈 Ocultar";
-            idVisible = true;
-            showToast("Identificación revelada correctamente.", "success");
-          } else {
-            showToast(
-              "No se encontraron datos de perfil del usuario.",
-              "error",
-            );
-            idSpan.textContent = "Error de datos";
-          }
+          // PIN correcto — mostrar identificación (ya la tenemos en userData)
+          cachedIdentification = (userData && userData.identification) || window.fullIdentification || "No registrada";
+          idSpan.textContent = cachedIdentification;
+          revealBtn.textContent = "🙈 Ocultar";
+          idVisible = true;
+          showToast("Identificación revelada correctamente.", "success");
         } catch (error) {
           console.error("Error en el proceso de revelación:", error);
           showToast("Error al conectar con la base de datos.", "error");
