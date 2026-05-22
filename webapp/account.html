@@ -32,7 +32,9 @@
 
       @media (max-width: 768px) {
         .app-layout {
-          grid-template-columns: 1fr;
+          display: grid;
+          grid-template-columns: 280px 1fr; /* O el tamaño que tenga tu sidebar */
+          min-height: 100vh;
         }
 
         .sidebar {
@@ -68,6 +70,8 @@
 
         .main-content {
           padding: 20px;
+          margin-top: 0;
+          padding-top: 20px;
         }
       }
 
@@ -136,56 +140,51 @@
       /* ─────────────────────────────────────────────────────────────── */
       /* SIDEBAR LOADING STATE                                           */
       .sidebar.sidebar-loading {
-        position: relative;
         pointer-events: none;
-        opacity: 0.8;
       }
 
-      .sidebar.sidebar-loading::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.05);
-        z-index: 1;
+      /* Sidebar skeleton loader */
+      .sidebar-skeleton {
+        padding: 8px 0;
       }
 
-      .sidebar-spinner {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-top-color: var(--primary);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        z-index: 2;
+      .skeleton-label {
+        height: 10px;
+        width: 60px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 4px;
+        margin: 16px 16px 10px;
+        animation: skeletonPulse 1.5s ease-in-out infinite;
       }
 
-      .sidebar {
-        position: relative;
+      .skeleton-item {
+        height: 38px;
+        margin: 4px 8px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.06);
+        animation: skeletonPulse 1.5s ease-in-out infinite;
       }
 
-      .sidebar.sidebar-loading::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.05);
-        z-index: 1;
+      .skeleton-item:nth-child(2) { animation-delay: 0.1s; }
+      .skeleton-item:nth-child(3) { animation-delay: 0.2s; }
+      .skeleton-item:nth-child(4) { animation-delay: 0.3s; }
+      .skeleton-item:nth-child(5) { animation-delay: 0.15s; }
+      .skeleton-item:nth-child(6) { animation-delay: 0.25s; }
+
+      .sidebar-skeleton.hidden { display: none; }
+
+      @keyframes skeletonPulse {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 0.9; }
       }
 
       .sidebar-item:disabled {
-        opacity: 0.6;
+        opacity: 0.5;
         cursor: not-allowed;
       }
 
-      .sidebar-spinner.hidden {
-        display: none;
-      }
-
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
+      /* keep spinner hidden - replaced by skeleton */
+      .sidebar-spinner { display: none !important; }
 
       /* ─────────────────────────────────────────────────────────────── */
       /* USER MENU DROPDOWN STYLES                                       */
@@ -669,6 +668,14 @@
         font-size: 48px;
         margin-bottom: 16px;
       }
+      .page-header {
+        margin-top: 0; /* Elimina el margen superior */
+        padding-top: 0;
+      }
+
+      .page-header h1 {
+        margin-top: 0; /* Elimina el margen por defecto del h1 */
+      }
 
       .loading-skeleton {
         background: var(--bg-surface);
@@ -724,16 +731,39 @@
             id="hamburgerBtn"
             onclick="toggleMobileMenu()"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" />
             </svg>
           </button>
-          <svg viewBox="0 0 40 40" fill="none" style="width: 32px; height: 32px">
+          <svg
+            viewBox="0 0 40 40"
+            fill="none"
+            style="width: 32px; height: 32px"
+          >
             <rect width="40" height="40" rx="12" fill="url(#tg)" />
-            <path d="M8 16h24M8 20h16M8 24h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />
+            <path
+              d="M8 16h24M8 20h16M8 24h20"
+              stroke="#fff"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            />
             <circle cx="30" cy="24" r="4" fill="#fff" fill-opacity=".9" />
             <defs>
-              <linearGradient id="tg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <linearGradient
+                id="tg"
+                x1="0"
+                y1="0"
+                x2="40"
+                y2="40"
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop stop-color="#6366f1" />
                 <stop offset="1" stop-color="#8b5cf6" />
               </linearGradient>
@@ -750,13 +780,53 @@
               <span class="topbar-user-arrow">▼</span>
             </button>
             <div class="user-menu hidden" id="userMenuDropdown">
-              <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08)">
-                <div id="menuUserName" style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">—</div>
-                <div id="menuUserEmail" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;margin-top:2px">—</div>
+              <div
+                style="
+                  padding: 12px 14px;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <div
+                  id="menuUserName"
+                  style="
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 160px;
+                  "
+                >
+                  —
+                </div>
+                <div
+                  id="menuUserEmail"
+                  style="
+                    font-size: 11px;
+                    color: var(--text-muted);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 160px;
+                    margin-top: 2px;
+                  "
+                >
+                  —
+                </div>
               </div>
-              <button class="user-menu-item" onclick="goToDashboard()">🏠 Dashboard</button>
-              <button class="user-menu-item" onclick="window.location.href='market.html'">🛒 WebMarket</button>
-              <button class="user-menu-item" onclick="logout()">🚪 Salir</button>
+              <button class="user-menu-item" onclick="goToDashboard()">
+                🏠 Dashboard
+              </button>
+              <button
+                class="user-menu-item"
+                onclick="window.location.href = 'market.html'"
+              >
+                🛒 WebMarket
+              </button>
+              <button class="user-menu-item" onclick="logout()">
+                🚪 Salir
+              </button>
             </div>
           </div>
         </div>
@@ -772,6 +842,19 @@
       <!-- SIDEBAR -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-spinner hidden" id="sidebarLoader"></div>
+        <!-- Skeleton shown while roles load -->
+        <div class="sidebar-skeleton" id="sidebarSkeleton">
+          <div class="skeleton-label"></div>
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+          <div class="skeleton-label"></div>
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+        </div>
+        <!-- Real nav (hidden until roles resolved) -->
+        <div id="sidebarNav" style="display:none">
         <div class="sidebar-section-label">Principal</div>
         <button
           class="sidebar-item buyer-only"
@@ -784,7 +867,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-recharge"
-          onclick="window.location.href='buyer.html?section=recharge'"
+          onclick="window.location.href = 'buyer.html?section=recharge'"
           disabled
         >
           <span class="icon">💳</span> Recargar saldo
@@ -792,7 +875,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-history"
-          onclick="window.location.href='buyer.html?section=history'"
+          onclick="window.location.href = 'buyer.html?section=history'"
           disabled
         >
           <span class="icon">📋</span> Historial
@@ -801,7 +884,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-market"
-          onclick="window.location.href='market.html'"
+          onclick="window.location.href = 'market.html'"
           disabled
         >
           <span class="icon">🛒</span> WebMarket
@@ -818,7 +901,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-card"
-          onclick="window.location.href='buyer.html?section=card'"
+          onclick="window.location.href = 'buyer.html?section=card'"
           disabled
         >
           <span class="icon">📡</span> Mi tarjeta NFC
@@ -826,7 +909,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-benefits"
-          onclick="window.location.href='buyer.html?section=benefits'"
+          onclick="window.location.href = 'buyer.html?section=benefits'"
           disabled
         >
           <span class="icon">⭐</span> Beneficios
@@ -834,7 +917,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-referrals"
-          onclick="window.location.href='buyer.html?section=referrals'"
+          onclick="window.location.href = 'buyer.html?section=referrals'"
           disabled
         >
           <span class="icon">🤝</span> Referidos
@@ -842,7 +925,7 @@
         <button
           class="sidebar-item buyer-only"
           id="nav-tickets"
-          onclick="window.location.href='buyer.html?section=tickets'"
+          onclick="window.location.href = 'buyer.html?section=tickets'"
           disabled
         >
           <span class="icon">🎫</span> Soporte
@@ -855,6 +938,7 @@
         >
           <span class="icon">↩</span> Regresar
         </button>
+        </div><!-- /sidebarNav -->
       </aside>
 
       <!-- MAIN -->
@@ -913,7 +997,10 @@
                   <div class="data-field">
                     <label>Número de identificación</label>
                     <div class="flex items-center gap-3 mt-1.5">
-                      <span id="userIdValue" class="font-mono text-[1.1rem] font-semibold tracking-[1px] text-slate-200">
+                      <span
+                        id="userIdValue"
+                        class="font-mono text-[1.1rem] font-semibold tracking-[1px] text-slate-200"
+                      >
                         ••••••••••
                       </span>
                       <button
@@ -921,7 +1008,9 @@
                         id="revealIdBtn"
                         class="btn btn-ghost btn-sm flex items-center gap-1"
                         onclick="handleRevealIdentification()"
-                      >🔑 Revelar</button>
+                      >
+                        🔑 Revelar
+                      </button>
                     </div>
                   </div>
 
@@ -945,12 +1034,24 @@
                 </div>
 
                 <!-- Password change section -->
-                <div style="margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--border);">
-                  <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">
+                <div
+                  style="
+                    margin-top: 28px;
+                    padding-top: 28px;
+                    border-top: 1px solid var(--border);
+                  "
+                >
+                  <h3
+                    style="
+                      font-size: 14px;
+                      font-weight: 600;
+                      margin-bottom: 16px;
+                    "
+                  >
                     Seguridad
                   </h3>
-                  <button 
-                    class="btn btn-secondary btn-sm" 
+                  <button
+                    class="btn btn-secondary btn-sm"
                     onclick="showChangePasswordModal()"
                   >
                     🔐 Cambiar contraseña
@@ -1229,7 +1330,7 @@
         const shortName = displayName.split(" ")[0] || emailPrefix || "Usuario";
         const topbarEl = document.getElementById("topbarName");
         topbarEl.textContent = shortName;
-        updateUserMenu(displayName || shortName, user.email, 'buyer');
+        updateUserMenu(displayName || shortName, user.email, "buyer");
 
         try {
           await loadPersonalData();
@@ -1253,10 +1354,18 @@
 
       function setRoleBadge(role) {
         const badge = document.getElementById("roleBadge");
-        const labels = { buyer: "Comprador", seller: "Vendedor", admin: "Administrador" };
-        const classes = { buyer: "badge-info", seller: "badge-success", admin: "badge-warning" };
+        const labels = {
+          buyer: "Comprador",
+          seller: "Vendedor",
+          admin: "Administrador",
+        };
+        const classes = {
+          buyer: "badge-info",
+          seller: "badge-success",
+          admin: "badge-warning",
+        };
         badge.textContent = labels[role] || "Usuario";
-        badge.className = `badge ${classes[role] || 'badge-info'}`;
+        badge.className = `badge ${classes[role] || "badge-info"}`;
       }
 
       window.toggleUserMenu = (e) => {
@@ -1270,42 +1379,48 @@
       });
 
       window.goToDashboard = () => {
-        const role = userData?.role || 'buyer';
-        if (role === 'admin') return window.location.href = 'admin.html';
-        if (role === 'seller') return window.location.href = 'seller.html';
-        window.location.href = 'buyer.html';
+        const role = userData?.role || "buyer";
+        if (role === "admin") return (window.location.href = "admin.html");
+        if (role === "seller") return (window.location.href = "seller.html");
+        window.location.href = "buyer.html";
       };
 
       window.goBackToRoleDashboard = () => {
-        const role = userData?.role || 'buyer';
-        if (role === 'admin') return window.location.href = 'admin.html';
-        if (role === 'seller') return window.location.href = 'seller.html';
-        window.location.href = 'buyer.html';
+        const role = userData?.role || "buyer";
+        if (role === "admin") return (window.location.href = "admin.html");
+        if (role === "seller") return (window.location.href = "seller.html");
+        window.location.href = "buyer.html";
       };
 
       function renderRoleSidebar(role) {
-        const buyerItems = document.querySelectorAll('.buyer-only');
-        buyerItems.forEach(el => el.style.display = role === 'buyer' ? '' : 'none');
-        const backBtn = document.getElementById('nav-back');
+        const buyerItems = document.querySelectorAll(".buyer-only");
+        buyerItems.forEach(
+          (el) => (el.style.display = role === "buyer" ? "" : "none"),
+        );
+        const backBtn = document.getElementById("nav-back");
         if (!backBtn) return;
-        if (role === 'buyer') {
-          backBtn.classList.add('hidden');
+        if (role === "buyer") {
+          backBtn.classList.add("hidden");
         } else {
-          backBtn.classList.remove('hidden');
-          backBtn.textContent = role === 'admin' ? '↩ Regresar a Administrador' : '↩ Regresar a Vendedor';
+          backBtn.classList.remove("hidden");
+          backBtn.textContent =
+            role === "admin"
+              ? "↩ Regresar a Administrador"
+              : "↩ Regresar a Vendedor";
         }
       }
 
       function setSidebarLoading(active) {
-        const sidebar = document.getElementById('sidebar');
-        const loader = document.getElementById('sidebarLoader');
-        if (!sidebar || !loader) return;
-        sidebar.classList.toggle('sidebar-loading', active);
-        loader.classList.toggle('hidden', !active);
+        const skeleton = document.getElementById("sidebarSkeleton");
+        const nav = document.getElementById("sidebarNav");
+        if (skeleton) skeleton.classList.toggle("hidden", !active);
+        if (nav) nav.style.display = active ? "none" : "";
       }
 
       function setSidebarReady(active) {
-        const buttons = document.querySelectorAll('#sidebar button.sidebar-item');
+        const buttons = document.querySelectorAll(
+          "#sidebar button.sidebar-item",
+        );
         buttons.forEach((button) => {
           button.disabled = !active;
         });
@@ -1329,12 +1444,19 @@
             document.getElementById("phoneDisplay").textContent =
               data.telefono || "—";
             document.getElementById("membershipDisplay").textContent =
-              (data.membershipLevel) || "—";
+              data.membershipLevel || "—";
 
             // Refresh topbar with Firestore name if richer than auth displayName
-            const role = data.role || 'buyer';
+            const role = data.role || "buyer";
             document.body.classList.add(`role-${role}`);
-            updateUserMenu(data.name || (currentUser.displayName || currentUser.email || 'Usuario'), data.email || currentUser.email, role);
+            updateUserMenu(
+              data.name ||
+                currentUser.displayName ||
+                currentUser.email ||
+                "Usuario",
+              data.email || currentUser.email,
+              role,
+            );
             renderRoleSidebar(role);
             if (data.name) {
               const fullName = data.name;
@@ -1619,8 +1741,8 @@
       // Logout function
       function logout() {
         auth.signOut().then(() => {
-            window.location.href = "login.html";
-          });
+          window.location.href = "login.html";
+        });
       }
 
       // Toast notification helper
@@ -1705,10 +1827,7 @@
           }
 
           // 3. ¡PIN CORRECTO! Ahora traemos la identificación real desde la colección 'users'
-          const userDoc = await db
-            .collection("users")
-            .doc(user.uid)
-            .get();
+          const userDoc = await db.collection("users").doc(user.uid).get();
 
           if (userDoc.exists) {
             // Extraemos el campo 'identification' tal como se guardó en el registro
