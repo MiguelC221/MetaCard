@@ -11,7 +11,70 @@
   <link rel="stylesheet" href="assets/css/styles.css" />
 
   <style>
-    /* Forzamos que la tarjeta contenga el overlay y respete sus bordes redondeados */
+    /* ── NAVBAR ───────────────────────────────────────────────── */
+    .top-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      box-sizing: border-box;
+    }
+
+    .nav-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+      cursor: pointer;
+    }
+
+    .nav-back-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      transform: translateX(-2px);
+    }
+
+    .nav-back-btn svg {
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+
+    .nav-back-btn:hover svg {
+      transform: translateX(-2px);
+    }
+
+    .nav-brand {
+      margin-left: auto;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.45);
+      letter-spacing: 0.04em;
+    }
+
+    /* Compensar el alto de la navbar */
+    .auth-container {
+      padding-top: 80px;
+    }
+
+    /* ── Overlay (sin cambios) ──────────────────────────────────── */
     .auth-card.glass {
       position: relative !important;
       overflow: hidden !important;
@@ -19,58 +82,65 @@
 
     .session-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(19, 118, 85, 0.96); /* Verde esmeralda */
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(19, 118, 85, 0.96);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 50; /* Por encima de los inputs y botones de la card */
+      z-index: 50;
       color: white;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.4s ease;
     }
-    
+
     .session-overlay.active {
       opacity: 1;
       pointer-events: auto;
     }
-    
-    .overlay-content {
-      text-align: center;
-      padding: 1.5rem;
-    }
-    
+
+    .overlay-content { text-align: center; padding: 1.5rem; }
+
     .overlay-title {
       font-size: 1.4rem;
       font-weight: 600;
       margin-bottom: 1rem;
       letter-spacing: -0.02em;
     }
-    
+
     .overlay-spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid rgba(255, 255, 255, 0.25);
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.25);
       border-top: 3px solid white;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto;
     }
-    
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
+      0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body class="auth-page">
+
+  <!-- ── NAVBAR ─────────────────────────────────────────────────── -->
+  <nav class="top-navbar">
+    <a href="/" class="nav-back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Inicio
+    </a>
+    <span class="nav-brand">MetaCard</span>
+  </nav>
 
   <div class="bg-orbs">
     <div class="orb orb-1"></div>
@@ -87,7 +157,7 @@
     </div>
 
     <div class="auth-card glass">
-      
+
       <div id="sessionOverlay" class="session-overlay">
         <div class="overlay-content">
           <div class="overlay-title">Iniciando sesión</div>
@@ -165,30 +235,19 @@
   <script src="assets/js/firebase-compat-config.js"></script>
 
   <script>
-
-    // ── Redirigir si ya tiene sesión ─────────────────────────────────────────
     auth.onAuthStateChanged(async user => {
       if (!user) return;
-
-      // 1. Mostrar el overlay verde únicamente dentro de la tarjeta
       const overlay = document.getElementById('sessionOverlay');
       overlay.classList.add('active');
-
       try {
-        // 2. Traer el rol del usuario en segundo plano
         const snap = await db.collection('users').doc(user.uid).get();
-        
         if (snap.exists) {
-          // Pequeño delay de 800ms para una transición visual suave
-          setTimeout(() => {
-            redirectByRole(snap.data().role);
-          }, 800);
+          setTimeout(() => { redirectByRole(snap.data().role); }, 800);
         } else {
           setTimeout(() => { redirectByRole('buyer'); }, 800);
         }
-      } catch(e) { 
+      } catch(e) {
         console.warn('onAuthState error', e);
-        // Si hay un error de red o base de datos, quitamos el bloqueo para permitir control manual
         overlay.classList.remove('active');
       }
     });
@@ -198,7 +257,6 @@
       window.location.href = map[role] || 'buyer.html';
     }
 
-    // ── UI helpers ───────────────────────────────────────────────────────────
     window.switchTab = (tab) => {
       document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
       document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
@@ -226,19 +284,18 @@
 
     function friendlyError(code) {
       const map = {
-        'auth/user-not-found':       'No existe una cuenta con ese correo.',
-        'auth/wrong-password':       'Contraseña incorrecta.',
-        'auth/invalid-credential':   'Correo o contraseña incorrectos.',
-        'auth/email-already-in-use': 'Ese correo ya está registrado.',
-        'auth/weak-password':        'La contraseña debe tener al menos 6 caracteres.',
-        'auth/invalid-email':        'Formato de correo inválido.',
-        'auth/too-many-requests':    'Demasiados intentos. Espera unos minutos.',
+        'auth/user-not-found':         'No existe una cuenta con ese correo.',
+        'auth/wrong-password':         'Contraseña incorrecta.',
+        'auth/invalid-credential':     'Correo o contraseña incorrectos.',
+        'auth/email-already-in-use':   'Ese correo ya está registrado.',
+        'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
+        'auth/invalid-email':          'Formato de correo inválido.',
+        'auth/too-many-requests':      'Demasiados intentos. Espera unos minutos.',
         'auth/network-request-failed': 'Sin conexión. Verifica tu internet.',
       };
       return map[code] || `Error (${code}). Intenta de nuevo.`;
     }
 
-    // ── LOGIN ────────────────────────────────────────────────────────────────
     window.handleLogin = async (e) => {
       e.preventDefault();
       setLoading('loginBtn', true);
@@ -256,43 +313,26 @@
       }
     };
 
-    // ── REGISTRO ─────────────────────────────────────────────────────────────
     window.handleRegister = async (e) => {
       e.preventDefault();
       setLoading('registerBtn', true);
       clearErr('registerError');
-
       const name     = document.getElementById('regName').value.trim();
       const idNum    = document.getElementById('regId').value.trim();
       const email    = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
       const referral = document.getElementById('regReferral').value.trim();
-
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         const token = await cred.user.getIdToken();
         const res = await fetch(`${window.location.origin}/users/register`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({
-            uid: cred.user.uid,
-            name,
-            email,
-            identification: idNum,
-            referral: referral || null
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ uid: cred.user.uid, name, email, identification: idNum, referral: referral || null })
         });
-
         const data = await res.json();
-        if (!data.success) {
-          throw new Error(data.error || 'Error al guardar en base de datos');
-        }
-
+        if (!data.success) throw new Error(data.error || 'Error al guardar en base de datos');
         window.location.href = 'buyer.html';
-
       } catch (err) {
         console.error('[register]', err);
         showErr('registerError', err.message || friendlyError(err.code));
