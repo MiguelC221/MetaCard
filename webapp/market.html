@@ -372,7 +372,6 @@ let currentUserBalance = 0;
 let allProducts       = [];
 let activeFilter      = 'all';
 let selectedProductId = null;
-let authReady         = false;
 let authReady     = false;
 let userCardId    = null;  // Card ID auto-filled for logged-in users
 
@@ -401,9 +400,6 @@ onAuthStateChanged(auth, async user => {
         </div>
       </div>`;
     loadAccountInfo(user.uid);
-      <span class="text-secondary text-sm">${user.displayName || user.email}</span>
-      <a href="buyer.html" class="btn btn-ghost btn-sm">← Mi cuenta</a>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>`;
 
     // Auto-detect card ID from Firestore
     try {
