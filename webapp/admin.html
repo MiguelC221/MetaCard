@@ -94,7 +94,21 @@
     </div>
     <div class="topbar-right">
       <span class="badge badge-warning">Admin</span>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+      <div class="topbar-user-menu">
+        <button class="topbar-user" onclick="toggleUserMenu(event)">
+          <div class="topbar-avatar" id="userAvatar">👤</div>
+          <span id="topbarName" class="text-secondary text-sm"></span>
+          <span class="topbar-user-arrow">▼</span>
+        </button>
+        <div class="user-menu hidden" id="userMenuDropdown">
+          <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08)">
+            <div id="menuUserName" style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">—</div>
+            <div id="menuUserEmail" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;margin-top:2px">—</div>
+          </div>
+          <button class="user-menu-item" onclick="gotoAccount()">👤 Mi cuenta</button>
+          <button class="user-menu-item" onclick="logout()">🚪 Salir</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -348,8 +362,40 @@ onAuthStateChanged(auth, async user => {
   currentUser = user;
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (!snap.exists() || snap.data().role !== 'admin') { window.location.href = 'login.html'; return; }
+  const userData = snap.data();
+  applyRolePalette(userData.role || 'admin');
+  updateTopbarUser(userData);
   loadAll();
 });
+
+function updateTopbarUser(data) {
+  const displayName = data.name || currentUser.displayName || currentUser.email || 'Usuario';
+  const shortName = displayName.split(' ')[0] || displayName;
+  document.getElementById('topbarName').textContent = shortName;
+  document.getElementById('userAvatar').textContent = (displayName || 'U').charAt(0).toUpperCase();
+  document.getElementById('menuUserName').textContent = displayName;
+  document.getElementById('menuUserEmail').textContent = data.email || currentUser.email || '—';
+}
+
+function applyRolePalette(role) {
+  document.body.classList.add(`role-${role}`);
+}
+
+window.toggleUserMenu = (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('userMenuDropdown');
+  if (menu) menu.classList.toggle('hidden');
+};
+
+document.addEventListener('click', () => {
+  const menu = document.getElementById('userMenuDropdown');
+  if (menu && !menu.classList.contains('hidden')) {
+    menu.classList.add('hidden');
+  }
+});
+
+window.gotoAccount = () => { window.location.href = 'account.html'; };
+window.logout = () => signOut(auth).then(() => window.location.href = 'login.html');
 
 
 async function loadAll() {

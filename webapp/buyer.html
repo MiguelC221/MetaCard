@@ -26,8 +26,32 @@
       cursor: pointer;
     }
 
+    .topbar-user[disabled] {
+      opacity: 0.7;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     .topbar-user:hover {
       background: rgba(255, 255, 255, 0.08);
+    }
+
+    .topbar-loader {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    .topbar-loader.hidden {
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .topbar-avatar {
@@ -230,8 +254,9 @@
     </div>
     <div class="topbar-right">
       <div class="topbar-user-menu">
-        <button class="topbar-user" onclick="toggleUserMenu(event)">
+        <button class="topbar-user" id="topbarUserBtn" onclick="toggleUserMenu(event)" disabled>
           <div class="topbar-avatar" id="userAvatar">👤</div>
+          <span class="topbar-loader hidden" id="navbarLoader"></span>
           <span id="topbarName" class="text-secondary text-sm"></span>
           <span class="topbar-user-arrow">▼</span>
         </button>
@@ -483,6 +508,7 @@ let userData    = null;
 
 // ── Auth guard ──────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
+  setNavbarLoading(true);
   if (!user) { window.location.href = 'login.html'; return; }
   currentUser = user;
   const snap  = await db.collection('users').doc(user.uid).get();
@@ -498,6 +524,7 @@ auth.onAuthStateChanged(async user => {
   // Restaurar sección guardada
   const saved = localStorage.getItem('buyerSection') || 'dashboard';
   showSection(saved);
+  setNavbarLoading(false);
 });
 
 
@@ -511,6 +538,7 @@ function renderDashboard() {
   const initial = (displayName || displayEmail).charAt(0).toUpperCase();
   document.getElementById('userAvatar').textContent = initial || '👤';
   // Dropdown header
+  document.body.classList.add('role-buyer');
   document.getElementById('menuUserName').textContent  = displayName || shortName;
   document.getElementById('menuUserEmail').textContent = displayEmail;
   document.getElementById('userName').textContent   = shortName;
@@ -785,6 +813,14 @@ window.showSection = (name) => {
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+function setNavbarLoading(active) {
+  const btn = document.getElementById('topbarUserBtn');
+  const loader = document.getElementById('navbarLoader');
+  if (!btn || !loader) return;
+  btn.disabled = active;
+  loader.classList.toggle('hidden', !active);
+}
+
 function fmt(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function setLoading(btn, v) { btn.querySelector('.btn-text').classList.toggle('hidden',v); btn.querySelector('.btn-spinner').classList.toggle('hidden',!v); btn.disabled=v; }
 window.showToast = (msg, type='info') => {
