@@ -214,4 +214,27 @@ router.post('/regenerate-pin', verifyToken, async (req, res) => {
   }
 });
 
+/* ─── POST /verify-pin — verifica el PIN privado del usuario ─────────── */
+router.post('/verify-pin', verifyToken, async (req, res) => {
+  try {
+    const { pin } = req.body;
+    if (!pin) return res.status(400).json({ success: false, error: 'PIN requerido' });
+
+    const userSnap = await db.collection('users').doc(req.uid).get();
+    if (!userSnap.exists)
+      return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+
+    const user = userSnap.data();
+    if (!user.privateCodeHash)
+      return res.status(400).json({ success: false, error: 'No tienes un código privado configurado' });
+
+    const isValid = await bcrypt.compare(String(pin), user.privateCodeHash);
+    return res.json({ success: isValid, ...(isValid ? {} : { error: 'PIN incorrecto' }) });
+  } catch (err) {
+    console.error('[users/verify-pin]', err);
+    return res.status(500).json({ success: false, error: 'Error interno' });
+  }
+});
+
 module.exports = router;
+

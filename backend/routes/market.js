@@ -98,7 +98,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
 
     /* ── 7.5 Jueves 2×1 en cine ────────────────────────────────────── */
     if (product.type === 'cinema' && applyThursday2x1) {
-      // Verify server-side that today is actually Thursday
+      // Verify server-side that today is a promo day
       const today = new Date();
       // Use Colombia timezone (UTC-5) for consistency
       const colombiaOffset = -5 * 60; // minutes
@@ -106,7 +106,18 @@ router.post('/purchase', verifyToken, async (req, res) => {
       const colombiaDate = new Date(today.getTime() + (colombiaOffset * 60 * 1000));
       const dayOfWeek = colombiaDate.getUTCDay(); // 0=Sun, 4=Thu
       
-      if (dayOfWeek === 4) {
+      // Load config from Firestore
+      let promoDays = [4]; // Default Thursday
+      try {
+        const settingsSnap = await db.collection('settings').doc('cinema2x1').get();
+        if (settingsSnap.exists) {
+          promoDays = settingsSnap.data().promoDays || [4];
+        }
+      } catch (err) {
+        console.error('[Market] Error fetching cinema promo days:', err);
+      }
+      
+      if (promoDays.includes(dayOfWeek)) {
         // Thursday 2x1: only charge for half the tickets (ceil to handle odd numbers)
         const paidSeats = Math.ceil(qty / 2);
         const freeSeats = qty - paidSeats;
@@ -199,7 +210,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
       convenioId,
       balanceBefore,
       balanceAfter,
-      description:   `Compra: ${product.name} x${qty}${thursday2x1Applied ? ' (2×1 Jueves)' : ''}${discountPercentage > 0 ? ` (DESC: ${discountPercentage}%)` : ''}`,
+      description:   `Compra: ${product.name} x${qty}${thursday2x1Applied ? ' (2×1 Cine)' : ''}${discountPercentage > 0 ? ` (DESC: ${discountPercentage}%)` : ''}`,
       selectedSeats: selectedSeats || [],
       ...(cinemaTicket && { cinemaTicket })
     });
@@ -224,7 +235,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
       discountPercentage,
       finalAmount:          totalAmount,
       ...(discountApplied > 0 && { discountMessage: thursday2x1Applied 
-        ? `¡Jueves 2×1 aplicado! ${Math.floor(qty/2)} boleta(s) gratis. Ahorro: $${(product.price * Math.floor(qty/2)).toLocaleString('es-CO')}${discountPercentage > 0 ? ` + convenio ${discountPercentage}%` : ''}`
+        ? `¡Día de Cine 2×1 aplicado! ${Math.floor(qty/2)} boleta(s) gratis. Ahorro: $${(product.price * Math.floor(qty/2)).toLocaleString('es-CO')}${discountPercentage > 0 ? ` + convenio ${discountPercentage}%` : ''}`
         : `¡Descuento por convenio aplicado! -$${discountApplied.toLocaleString('es-CO')}` }),
       ...(cinemaTicket && { cinemaTicket })
     });

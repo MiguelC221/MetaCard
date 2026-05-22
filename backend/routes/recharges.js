@@ -11,6 +11,30 @@ const { sendNotificationToUser, MESSAGES } = require('../services/fcmService');
 const LARGE_THRESHOLD = Number(process.env.LARGE_RECHARGE_THRESHOLD) || 100000;
 const LARGE_BONUS     = Number(process.env.LARGE_RECHARGE_BONUS)     || 30000;
 
+router.post('/request', verifyToken, async (req, res) => {
+  const { amount, method } = req.body;
+  if (!amount || !method) {
+    return res.status(400).json({ success: false, error: 'amount y method son requeridos' });
+  }
+
+  try {
+    const newReq = {
+      userId: req.user.uid,
+      amount: Number(amount),
+      method,
+      status: 'pending',
+      requestedAt: FieldValue.serverTimestamp(),
+    };
+
+    const docRef = await db.collection('rechargeRequests').add(newReq);
+
+    return res.json({ success: true, requestId: docRef.id });
+  } catch (err) {
+    console.error('[recharges/request]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/approve', verifyToken, verifyAdmin, async (req, res) => {
   const { rechargeRequestId } = req.body;
   if (!rechargeRequestId) {
