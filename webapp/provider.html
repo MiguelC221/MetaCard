@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="icono.png">
-  <title>MetaCard - Vendedor</title>
+  <title>MetaCard - Proveedor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="assets/css/styles.css"/>
@@ -53,10 +53,10 @@
       <div style="background-color: #fff; border-radius: 50%; padding: 4px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);">
         <img src="icono.png" alt="MetaCard" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
-      <span>MetaCard Vendedor</span>
+      <span>MetaCard Proveedor</span>
     </div>
     <div class="topbar-right">
-      <span class="badge badge-info">Vendedor</span>
+      <span class="badge badge-info">Proveedor</span>
       <div class="topbar-user-menu">
         <button class="topbar-user" onclick="toggleUserMenu(event)">
           <div class="topbar-avatar" id="userAvatar">👤</div>
@@ -120,7 +120,7 @@
           <button class="btn btn-ghost btn-sm" onclick="filterHistory('payment')">NFC</button>
           <button class="btn btn-ghost btn-sm" onclick="filterHistory('market_purchase')">Market</button>
         </div>
-        <div id="sellerHistoryList">
+        <div id="providerHistoryList">
           <div class="text-muted text-sm text-center" style="padding:24px">Cargando...</div>
         </div>
       </div>
@@ -128,11 +128,11 @@
 
     <!-- ── SALDO ── -->
     <section id="section-wallet" class="hidden">
-      <div class="page-header"><h1>Mi saldo como vendedor</h1></div>
+      <div class="page-header"><h1>Mi saldo como proveedor</h1></div>
       <div class="balance-card" style="max-width:380px">
         <div class="balance-label">Saldo acumulado</div>
-        <div class="balance-amount" id="sellerBalanceDisplay">$0</div>
-        <div class="balance-uid" id="sellerNameDisplay"></div>
+        <div class="balance-amount" id="providerBalanceDisplay">$0</div>
+        <div class="balance-uid" id="providerNameDisplay"></div>
       </div>
     </section>
 
@@ -219,7 +219,7 @@ import { doc, getDoc, collection, query,
          where, orderBy, limit, getDocs }        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 let currentUser = null;
-let sellerData  = null;
+let providerData  = null;
 let allHistory  = [];
 let selectedType = 'product';
 
@@ -227,21 +227,21 @@ onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'login.html'; return; }
   currentUser = user;
   const snap = await getDoc(doc(db,'users',user.uid));
-  if (!snap.exists() || !['seller','admin'].includes(snap.data().role)) { window.location.href = 'login.html'; return; }
-  sellerData = snap.data();
-  const displayName = sellerData.name || currentUser.displayName || currentUser.email || 'Usuario';
+  if (!snap.exists() || !['proveedor','admin'].includes(snap.data().role)) { window.location.href = 'login.html'; return; }
+  providerData = snap.data();
+  const displayName = providerData.name || currentUser.displayName || currentUser.email || 'Usuario';
   const shortName = displayName.split(' ')[0] || displayName;
-  applyRolePalette(sellerData.role || 'seller');
+  applyRolePalette(providerData.role || 'proveedor');
   document.getElementById('topbarName').textContent = shortName;
   document.getElementById('userAvatar').textContent = (displayName || 'U').charAt(0).toUpperCase();
   document.getElementById('menuUserName').textContent = displayName;
-  document.getElementById('menuUserEmail').textContent = sellerData.email || currentUser.email || '—';
-  document.getElementById('sellerBalanceDisplay').textContent = '$' + Number(sellerData.balance||0).toLocaleString('es-CO');
-  document.getElementById('sellerNameDisplay').textContent    = sellerData.name;
+  document.getElementById('menuUserEmail').textContent = providerData.email || currentUser.email || '—';
+  document.getElementById('providerBalanceDisplay').textContent = '$' + Number(providerData.balance||0).toLocaleString('es-CO');
+  document.getElementById('providerNameDisplay').textContent    = providerData.name;
   loadHistory();
   loadMyProducts();
   // Restaurar sección guardada
-  const saved = localStorage.getItem('sellerSection') || 'sell';
+  const saved = localStorage.getItem('providerSection') || 'sell';
   showSection(saved);
 });
 
@@ -278,7 +278,7 @@ window.processPayment = async () => {
     const res = await fetch(`${BACKEND_URL}/payments/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ cardUid, amount, sellerId: currentUser.uid }),
+      body: JSON.stringify({ cardUid, amount, providerId: currentUser.uid }),
     });
     const data = await res.json();
     if (data.success) {
@@ -297,8 +297,8 @@ window.processPayment = async () => {
 
 /* ── Historial (NFC + Market) ─────────────────────────────────────── */
 async function loadHistory() {
-  const q1 = query(collection(db,'transactions'), where('sellerId','==',currentUser.uid), where('type','==','payment'), limit(100));
-  const q2 = query(collection(db,'transactions'), where('sellerId','==',currentUser.uid), where('type','==','market_purchase'), limit(100));
+  const q1 = query(collection(db,'transactions'), where('providerId','==',currentUser.uid), where('type','==','payment'), limit(100));
+  const q2 = query(collection(db,'transactions'), where('providerId','==',currentUser.uid), where('type','==','market_purchase'), limit(100));
   const [s1, s2] = await Promise.all([getDocs(q1).catch(()=>null), getDocs(q2).catch(()=>null)]);
   const rows = [];
   if (s1) s1.docs.forEach(d => rows.push({ id: d.id, ...d.data() }));
@@ -312,7 +312,7 @@ window.filterHistory = (type) => renderHistory(type);
 
 function renderHistory(type) {
   const filtered = type === 'all' ? allHistory : allHistory.filter(r => r.type === type);
-  const el = document.getElementById('sellerHistoryList');
+  const el = document.getElementById('providerHistoryList');
   if (!filtered.length) { el.innerHTML = '<div class="text-muted text-sm text-center" style="padding:24px">Sin cobros aún.</div>'; return; }
   el.innerHTML = filtered.map(t => {
     const date = t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString('es-CO') : '—';
@@ -420,7 +420,7 @@ async function loadMyProducts() {
 
     el.innerHTML = data.products.map(p => {
       const imgEl = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':(p.type==='cinema'?'🍿':'📦'));
-      const canDelete = true; // Ahora el vendedor puede borrar cualquier producto
+      const canDelete = true; // Ahora el proveedor puede borrar cualquier producto
       const typeLabel = p.type==='service'?'⚙️ Servicio':(p.type==='cinema'?'🍿 Cine':'📦 Producto');
       return `<div class="my-product-card">
         <div class="my-product-thumb">${imgEl}</div>
@@ -455,7 +455,7 @@ window.showSection = (name) => {
   document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`section-${name}`)?.classList.remove('hidden');
   document.getElementById(`nav-${name}`)?.classList.add('active');
-  localStorage.setItem('sellerSection', name);  // guardar posición
+  localStorage.setItem('providerSection', name);  // guardar posición
   if (name === 'history')  loadHistory();
   if (name === 'products') loadMyProducts();
 };

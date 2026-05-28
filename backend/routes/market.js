@@ -159,7 +159,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
       return res.status(402).json({ success: false, error: 'Saldo insuficiente', balance: buyer.balance || 0 });
     }
 
-    /* ── 8. Batch: descontar buyer, acreditar seller, decrementar stock */
+    /* ── 8. Batch: descontar buyer, acreditar provider, decrementar stock */
     const balanceBefore = buyer.balance || 0;
     const balanceAfter  = balanceBefore - totalAmount;
     const batch = db.batch();
@@ -171,8 +171,8 @@ router.post('/purchase', verifyToken, async (req, res) => {
       frozenAt:   null,
     });
 
-    // Actualizar vendedor
-    batch.update(db.collection('users').doc(product.sellerId), {
+    // Actualizar proveedor
+    batch.update(db.collection('users').doc(product.providerId), {
       balance: FieldValue.increment(totalAmount),
     });
 
@@ -197,7 +197,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
     const txId = addTransactionToBatch(batch, {
       type:          'market_purchase',
       buyerId:       req.uid,
-      sellerId:      product.sellerId,
+      providerId:    product.providerId,
       productId,
       productName:   product.name,
       productType:   product.type,
@@ -219,7 +219,7 @@ router.post('/purchase', verifyToken, async (req, res) => {
 
     /* ── 10. Notificaciones ────────────────────────────────────────── */
     sendNotificationToUser(req.uid, '🛒 Compra exitosa', `Compraste "${product.name}" por $${totalAmount.toLocaleString('es-CO')}.`, { type: 'market_purchase', txId }).catch(console.error);
-    sendNotificationToUser(product.sellerId, '💰 Nueva venta', `Vendiste "${product.name}" x${qty} por $${totalAmount.toLocaleString('es-CO')}.`, { type: 'market_sale', txId }).catch(console.error);
+    sendNotificationToUser(product.providerId, '💰 Nueva venta', `Vendiste "${product.name}" x${qty} por $${totalAmount.toLocaleString('es-CO')}.`, { type: 'market_sale', txId }).catch(console.error);
 
     if (balanceAfter < LOW_BALANCE) {
       sendNotificationToUser(req.uid, '⚠️ Saldo bajo', `Tu saldo es $${balanceAfter.toLocaleString('es-CO')}.`).catch(console.error);

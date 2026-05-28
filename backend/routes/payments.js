@@ -13,11 +13,11 @@ const LOW_BALANCE = Number(process.env.LOW_BALANCE_THRESHOLD) || 10000;
 
 
 router.post('/process', verifyToken, async (req, res) => {
-  const { cardUid, amount, sellerId } = req.body;
+  const { cardUid, amount, providerId } = req.body;
 
   // ── Validación básica ────────────────────────────────────────────────────
-  if (!cardUid || !amount || !sellerId) {
-    return res.status(400).json({ success: false, error: 'cardUid, amount y sellerId son requeridos' });
+  if (!cardUid || !amount || !providerId) {
+    return res.status(400).json({ success: false, error: 'cardUid, amount y providerId son requeridos' });
   }
   const amountNum = Number(amount);
   if (!Number.isFinite(amountNum) || amountNum <= 0) {
@@ -31,7 +31,7 @@ router.post('/process', verifyToken, async (req, res) => {
     }
     const card = cardSnap.data();
     if (card.status !== 'active') {
-      await logSecurityAlert({ userId: card.userId, type: 'blocked_card_attempt', description: `Intento de pago de $${amountNum} con tarjeta inactiva (${cardUid})`, metadata: { amount: amountNum, sellerId }, notifyUser: true });
+      await logSecurityAlert({ userId: card.userId, type: 'blocked_card_attempt', description: `Intento de pago de $${amountNum} con tarjeta inactiva (${cardUid})`, metadata: { amount: amountNum, providerId }, notifyUser: true });
       return res.status(403).json({ success: false, error: 'Tarjeta bloqueada o inactiva' });
     }
 
@@ -42,17 +42,17 @@ router.post('/process', verifyToken, async (req, res) => {
     const buyer = buyerSnap.data();
 
     if (isBalanceFrozen(buyer)) {
-      await logSecurityAlert({ userId: card.userId, type: 'frozen_balance_attempt', description: `Intento de pago de $${amountNum} con saldo congelado`, metadata: { amount: amountNum, sellerId } });
+      await logSecurityAlert({ userId: card.userId, type: 'frozen_balance_attempt', description: `Intento de pago de $${amountNum} con saldo congelado`, metadata: { amount: amountNum, providerId } });
       return res.status(403).json({ success: false, error: 'El saldo del comprador está congelado por inactividad' });
     }
     if ((buyer.balance || 0) < amountNum) {
-      await logSecurityAlert({ userId: card.userId, type: 'insufficient_funds', description: `Intento de pago fallido por saldo insuficiente ($${amountNum})`, metadata: { amount: amountNum, balance: buyer.balance || 0, sellerId } });
+      await logSecurityAlert({ userId: card.userId, type: 'insufficient_funds', description: `Intento de pago fallido por saldo insuficiente ($${amountNum})`, metadata: { amount: amountNum, balance: buyer.balance || 0, providerId } });
       return res.status(402).json({ success: false, error: 'Saldo insuficiente', balance: buyer.balance || 0 });
     }
 
-    const sellerSnap = await db.collection('users').doc(sellerId).get();
-    if (!sellerSnap.exists) {
-      return res.status(404).json({ success: false, error: 'Vendedor no encontrado' });
+    const providerSnap = await db.collection('users').doc(providerId).get();
+    if (!providerSnap.exists) {
+      return res.status(404).json({ success: false, error: 'Proveedor no encontrado' });
     }
 
     const cashback       = calculateCashback(amountNum);
@@ -67,7 +67,7 @@ router.post('/process', verifyToken, async (req, res) => {
       frozenAt:    null,
     });
 
-    batch.update(db.collection('users').doc(sellerId), {
+    batch.update(db.collection('users').doc(providerId), {
       balance: FieldValue.increment(amountNum),
     });
 
@@ -75,7 +75,7 @@ router.post('/process', verifyToken, async (req, res) => {
       type:          'payment',
       cardUid,
       buyerId,
-      sellerId,
+      providerId,
       amount:        amountNum,
       balanceBefore,
       balanceAfter,
@@ -87,7 +87,7 @@ router.post('/process', verifyToken, async (req, res) => {
       type:          'cashback',
       cardUid,
       buyerId,
-      sellerId,
+      providerId,
       amount:        cashback,
       balanceBefore: balanceBefore - amountNum,
       balanceAfter,

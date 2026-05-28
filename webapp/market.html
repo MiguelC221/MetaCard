@@ -519,7 +519,7 @@ function renderProducts() {
         <div class="product-footer">
           <div>
             ${priceHtml}
-            <div class="product-stock">${stockLabel} · por ${esc(p.sellerName||'Vendedor')}</div>
+            <div class="product-stock">${stockLabel} · por ${esc(p.providerName||'Proveedor')}</div>
           </div>
           <button class="btn-buy" ${outOfStock ? 'disabled' : ''} onclick="event.stopPropagation();openBuyModal('${p.id}')">
             ${outOfStock ? '⚠️ Agotado' : '🛒 Comprar'}

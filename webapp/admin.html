@@ -97,7 +97,7 @@
       <div><span class="text-xs text-muted">Tipo</span><div class="font-bold mt-1" id="prodModalType"></div></div>
       <div><span class="text-xs text-muted">Precio</span><div class="font-bold mt-1 text-success" id="prodModalPrice"></div></div>
       <div><span class="text-xs text-muted">Stock</span><div class="font-bold mt-1" id="prodModalStock"></div></div>
-      <div><span class="text-xs text-muted">Vendedor</span><div class="font-bold mt-1" id="prodModalSeller"></div></div>
+      <div><span class="text-xs text-muted">Proveedor</span><div class="font-bold mt-1" id="prodModalProvider"></div></div>
     </div>
     <div class="mb-4"><span class="text-xs text-muted">Descripción</span><div class="card mt-1" style="padding:12px;background:var(--bg-elevated);font-size:13px;line-height:1.6" id="prodModalDesc"></div></div>
     <div id="prodRejectReasonWrap" class="form-group mb-3 hidden"><label>Motivo del rechazo</label><input type="text" id="prodRejectReasonInput" placeholder="Escribe el motivo..."/></div>
@@ -240,7 +240,7 @@
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Tipo</th><th>Comprador</th><th>Vendedor</th><th>Monto</th><th>Cashback</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>Tipo</th><th>Comprador</th><th>Proveedor</th><th>Monto</th><th>Cashback</th><th>Fecha</th></tr></thead>
             <tbody id="allTxBody"><tr><td colspan="6" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
           </table>
         </div>
@@ -268,7 +268,7 @@
 
     <!-- ── PRODUCTOS ── -->
     <section id="section-products" class="hidden">
-      <div class="page-header"><h1>Productos del Market</h1><p>Revisa y aprueba las publicaciones de los vendedores.</p></div>
+      <div class="page-header"><h1>Productos del Market</h1><p>Revisa y aprueba las publicaciones de los proveedores.</p></div>
       <div class="card">
         <div class="flex gap-2 mb-4">
           <button class="btn btn-secondary btn-sm" onclick="filterProducts('pending')">⏳ Pendientes</button>
@@ -278,7 +278,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Imagen</th><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Vendedor</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Imagen</th><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Proveedor</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody id="productsBody"><tr><td colspan="8" class="text-center text-muted" style="padding:24px">Cargando...</td></tr></tbody>
           </table>
         </div>
@@ -637,7 +637,7 @@ async function loadTxs() {
   document.getElementById('allTxBody').innerHTML = snap.docs.map(d => {
     const t = d.data();
     const date = t.timestamp?.toDate?t.timestamp.toDate().toLocaleDateString('es-CO'):'—';
-    return `<tr><td><span class="badge ${typeClass[t.type]||'badge-muted'}">${t.type}</span></td><td class="text-xs text-secondary">${(t.buyerId||'—').substring(0,12)}…</td><td class="text-xs text-secondary">${t.sellerId?(t.sellerId.substring(0,12)+'…'):'—'}</td><td class="font-bold">${fmt(t.amount)}</td><td class="text-info">${t.cashbackAmount?fmt(t.cashbackAmount):'—'}</td><td class="text-xs text-muted">${date}</td></tr>`;
+    return `<tr><td><span class="badge ${typeClass[t.type]||'badge-muted'}">${t.type}</span></td><td class="text-xs text-secondary">${(t.buyerId||'—').substring(0,12)}…</td><td class="text-xs text-secondary">${t.providerId?(t.providerId.substring(0,12)+'…'):'—'}</td><td class="font-bold">${fmt(t.amount)}</td><td class="text-info">${t.cashbackAmount?fmt(t.cashbackAmount):'—'}</td><td class="text-xs text-muted">${date}</td></tr>`;
   }).join('');
 }
 
@@ -747,7 +747,7 @@ window.filterProducts = (status) => {
       <td><span class="badge ${p.type==='service'?'badge-info':'badge-muted'}">${p.type==='service'?'Servicio':'Producto'}</span></td>
       <td class="text-success font-bold">${fmt(p.price)}</td>
       <td>${p.type==='service'?'∞':p.stock}</td>
-      <td class="text-xs text-secondary">${p.sellerName||'—'}</td>
+      <td class="text-xs text-secondary">${p.providerName||'—'}</td>
       <td><span class="badge ${stMap[p.status]||'badge-muted'}">${stLabel[p.status]||p.status}</span></td>
       <td>${actions}</td>
     </tr>`;
@@ -763,7 +763,7 @@ window.openProductModal = (id) => {
   document.getElementById('prodModalType').textContent   = p.type === 'service' ? '⚙️ Servicio' : '📦 Producto';
   document.getElementById('prodModalPrice').textContent  = fmt(p.price);
   document.getElementById('prodModalStock').textContent  = p.type==='service'?'Sin límite':p.stock;
-  document.getElementById('prodModalSeller').textContent = p.sellerName || p.sellerId;
+  document.getElementById('prodModalProvider').textContent = p.providerName || p.providerId;
   document.getElementById('prodModalDesc').textContent   = p.description;
   const imgEl = document.getElementById('prodModalImg');
   imgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover"/>` : (p.type==='service'?'⚙️':'📦');

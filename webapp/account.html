@@ -1382,12 +1382,12 @@
         const badge = document.getElementById("roleBadge");
         const labels = {
           buyer: "Clientes",
-          seller: "Vendedor",
+          proveedor: "Proveedor",
           admin: "Administrador",
         };
         const classes = {
           buyer: "badge-info",
-          seller: "badge-success",
+          proveedor: "badge-success",
           admin: "badge-warning",
         };
         badge.textContent = labels[role] || "Usuario";
@@ -1407,14 +1407,14 @@
       window.goToDashboard = () => {
         const role = userData?.role || "buyer";
         if (role === "admin") return (window.location.href = "admin.html");
-        if (role === "seller") return (window.location.href = "seller.html");
+        if (role === "proveedor") return (window.location.href = "provider.html");
         window.location.href = "buyer.html";
       };
 
       window.goBackToRoleDashboard = () => {
         const role = userData?.role || "buyer";
         if (role === "admin") return (window.location.href = "admin.html");
-        if (role === "seller") return (window.location.href = "seller.html");
+        if (role === "proveedor") return (window.location.href = "provider.html");
         window.location.href = "buyer.html";
       };
 
@@ -1432,7 +1432,7 @@
           backBtn.textContent =
             role === "admin"
               ? "↩ Regresar a Administrador"
-              : "↩ Regresar a Vendedor";
+              : "↩ Regresar a Proveedor";
         }
       }
 

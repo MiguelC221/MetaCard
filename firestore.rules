@@ -10,7 +10,7 @@ service cloud.firestore {
       return exists(userRef) && get(userRef).data.get('role', '') == role; 
     }
     function isAdmin() { return isAuth() && hasRole('admin'); }
-    function isSeller() { return isAuth() && (hasRole('seller') || hasRole('admin')); }
+    function isProvider() { return isAuth() && (hasRole('proveedor') || hasRole('admin')); }
 
     // ── Users ────────────────────────────────────────────────────────────────
     match /users/{uid} {
@@ -24,7 +24,7 @@ service cloud.firestore {
     match /transactions/{txId} {
       allow read: if isAuth() && (
         resource.data.buyerId == request.auth.uid ||
-        resource.data.sellerId == request.auth.uid ||
+        resource.data.providerId == request.auth.uid ||
         isAdmin()
       );
       // Solo el backend (Admin SDK) puede escribir transacciones
@@ -50,19 +50,19 @@ service cloud.firestore {
     // ── Products ─────────────────────────────────────────────────────────────
     match /products/{productId} {
       allow read: if true; // público
-      allow write: if isSeller();
+      allow write: if isProvider();
     }
 
     // ── Market / Orders ──────────────────────────────────────────────────────
     match /orders/{orderId} {
       allow read: if isAuth() && (
         resource.data.buyerId == request.auth.uid ||
-        resource.data.sellerId == request.auth.uid ||
+        resource.data.providerId == request.auth.uid ||
         isAdmin()
       );
       allow create: if isAuth();
       allow update: if isAuth() && (
-        resource.data.sellerId == request.auth.uid || isAdmin()
+        resource.data.providerId == request.auth.uid || isAdmin()
       );
     }
 
